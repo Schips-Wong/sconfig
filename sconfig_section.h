@@ -16,13 +16,13 @@ void* step_section_get_chars_start(void* this_fsm);
 void* step_section_get_chars_ing(void* this_fsm);
 void* step_section_head_done(void* this_fsm);
 
-static Procedure sub_procedure_list[] = { 
+static Procedure section_procedure_list[] = { 
     step_section_head_start, 
     step_section_get_chars_start,
     step_section_get_chars_ing,
     step_section_head_done};
 
-enum sub_procedure_id { 
+enum section_procedure_id { 
     state_section_head_start, 
     state_section_get_chars_start, 
     state_section_get_chars_ing, 
@@ -42,7 +42,7 @@ static inline int is_section_procedure_done(FSM *this_fsm)
 /* 额外需要提供的跳转序列接口 */
 static inline Procedure* get_section_procedure_list(void)
 {
-    return sub_procedure_list;
+    return section_procedure_list;
 }
 
 char *get_tmp_section_name(void);

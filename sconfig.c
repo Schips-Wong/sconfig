@@ -12,6 +12,7 @@
 #include "openfsm.h"
 #include "sconfig.h"
 #include "sconfig_section.h"
+#include "sconfig_item.h"
 
 /*
  *  说明
@@ -24,18 +25,30 @@
 /* ------------------- Functions -----------------------------*/
 /* 状态机 函数指针 区域 */
 void* top_step_check_type(void* this_fsm);
-void* top_step_section_get_head(void* this_fsm);//计数
-void* top_step_done(void* this_fsm);//计数完成
+void* top_step_find_section(void* this_fsm);//计数
 void* top_step_find_item(void* this_fsm);//错误过程
+void* top_step_done(void* this_fsm);//计数完成
 
 
 /* 状态定义(这里的顺序要求与 procedure_list[] 一致) */
-enum procedure_id{top_state_check_type, top_state_section_get_head, top_state_done, top_state_find_item};
+enum procedure_id{
+    top_state_check_type, 
+    top_state_find_section, 
+    top_state_find_item,
+    top_state_done,
+};
+
 /* 状态机调整列表 */
-static Procedure procedure_list[] = { top_step_check_type, top_step_section_get_head, top_step_done, top_step_find_item };
+static Procedure procedure_list[] = { 
+    top_step_check_type, 
+    top_step_find_section, 
+    top_step_find_item,
+    top_step_done, 
+};
 
 // 子状态 相关
 static FSM section_sub_fsm = {0};
+static FSM item_sub_fsm = {0};
 
 // 判断这一行是什么内容 : 注释， 节 还是 项
 void* top_step_check_type(void* this_fsm)
@@ -68,7 +81,7 @@ void* top_step_check_type(void* this_fsm)
         case '[':
             //printf("found section head : %s", p_tmp_buff);
             init_tmp_section_name();
-            set_next_state(this_fsm, top_state_section_get_head);
+            set_next_state(this_fsm, top_state_find_section);
             break;
         case ']':
             //printf("found section end %s", p_tmp_buff);
@@ -79,7 +92,7 @@ void* top_step_check_type(void* this_fsm)
         // 其他情况则是匹配的字符
         default :
             // 此时需要与值进行判断
-            set_next_state(this_fsm, top_state_done);
+            set_next_state(this_fsm, top_state_find_item);
             break;
     }
 
@@ -92,7 +105,7 @@ void *try_insert_section(void *this_fsm, char *section_name)
     return NULL;
 }
 
-void* top_step_section_get_head(void* this_fsm) // 解析section头部信息
+void* top_step_find_section(void* this_fsm) // 解析section头部信息
 {
     Config *conf_itself = get_data_entry(this_fsm);
     struct section * sections; 
@@ -106,12 +119,10 @@ void* top_step_section_get_head(void* this_fsm) // 解析section头部信息
     sections = conf_itself->sections;
     section_name = p_tmp_buff;
 
-    //已经将完整的数据给到了set_data_entry(&section_sub_fsm, conf_itself->p_tmp_buff);
-    
     run_state_machine_once(&section_sub_fsm);
     if(is_fsm_error(&section_sub_fsm))
     {
-        printf("top_step_section_get_head err\n");
+        printf("top_step_find_section err\n");
         set_next_state(&section_sub_fsm, get_section_procedure_default_state());
     }
 
@@ -120,6 +131,38 @@ void* top_step_section_get_head(void* this_fsm) // 解析section头部信息
     {
         set_next_state(this_fsm,         top_state_check_type);
         set_next_state(&section_sub_fsm, get_section_procedure_default_state());
+    }
+
+    return NULL;
+}
+
+void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
+{
+    Config *conf_itself = get_data_entry(this_fsm);
+    struct section * sections; 
+    char *p_tmp_buff;
+    char *section_name;
+
+    if(!this_fsm)    return NULL;
+    if(!conf_itself) return NULL;
+
+    p_tmp_buff = conf_itself->p_tmp_buff;
+    sections = conf_itself->sections;
+    section_name = p_tmp_buff;
+
+    run_state_machine_once(&item_sub_fsm);
+    if(is_fsm_error(&item_sub_fsm))
+    {
+        printf("top_step_find_item err\n");
+        set_next_state(&item_sub_fsm, get_item_procedure_default_state());
+    }
+
+    // 如果判断完成则继续判断其他部分
+    if(is_section_procedure_done(&item_sub_fsm))
+    {
+        set_next_state(this_fsm,         top_state_check_type);
+        set_next_state(&item_sub_fsm, get_item_procedure_default_state());
+        //printf("Done\n");
     }
 
     return NULL;
@@ -155,11 +198,6 @@ void* top_step_done(void* this_fsm)//计数完成
     return NULL;
 }
 
-void* top_step_find_item(void* this_fsm) //默认
-{
-    set_next_state(this_fsm, top_state_check_type);
-    return NULL;
-}
 
 static void __sconfig_init_sub_fsm_once(Config * conf)
 {
@@ -170,6 +208,10 @@ static void __sconfig_init_sub_fsm_once(Config * conf)
     set_procedures(&section_sub_fsm, get_section_procedure_list());
     set_data_entry(&section_sub_fsm, conf);
     set_default_state(&section_sub_fsm, get_section_procedure_default_state());
+
+    set_procedures(&item_sub_fsm, get_item_procedure_list());
+    set_data_entry(&item_sub_fsm, conf);
+    set_default_state(&item_sub_fsm, get_item_procedure_default_state());
 }
 
 static void __sconfig_init_top_fsm_once(Config * conf)

@@ -20,8 +20,48 @@
  **********************************************************
  */
 
-#ifndef __sconfig_item__
-#define __sconfig_item__
+#ifndef __SCONFIG_ITEM__
+#define __SCONFIG_ITEM__
+
+#include "openfsm.h"
+
+void* step_item_get_chars_start(void* this_fsm);
+void* step_item_get_key(void* this_fsm);
+void* step_item_get_val(void* this_fsm);
+void* step_item_head_done(void* this_fsm);
+
+static Procedure item_procedure_list[] = { 
+    step_item_get_chars_start,
+    step_item_get_key,
+    step_item_get_val,
+    step_item_head_done,
+};
+
+enum item_procedure_id { 
+    state_item_get_chars_start, 
+    state_item_get_key, 
+    state_item_get_val,
+    state_item_head_done,
+};
+
+static inline state get_item_procedure_default_state(void)
+{
+    return state_item_get_chars_start;
+}
+
+static inline int is_item_procedure_done(FSM *this_fsm)
+{
+    return is_curr_state(this_fsm, state_item_head_done);
+}
+
+/* 额外需要提供的跳转序列接口 */
+static inline Procedure* get_item_procedure_list(void)
+{
+    return item_procedure_list;
+}
+
+char *get_tmp_item_name(void);
+void init_tmp_item_name(void);
 
 #endif /* Head define end*/
 

@@ -63,17 +63,21 @@ void* step_section_head_start(void* this_fsm)
 // 每次解析时用于存放解析字符的容器
 static char tmp_section_name[128]; 
 static int  tmp_section_name_index;
+//static int  tmp_section_flag;
+// 如果有些配置写在 节 名之外，则默认的节为 "ambiguous"
+static const char* const ambiguous_section_name = "ambiguous"; 
 
 void init_tmp_section_name(void)
 {
-    printf("init_tmp_section_name\n");
+    //printf("init_tmp_section_name\n");
     memset(tmp_section_name, 0, sizeof(tmp_section_name));
     tmp_section_name_index = 0;
 }
 
 char *get_tmp_section_name(void)
 {
-    printf("get_tmp_section_name : [%s]\n", tmp_section_name);
+    //printf("get_tmp_section_name : [%s]\n", tmp_section_name);
+    return tmp_section_name;
 }
 
 char push_section_name(char ch)
