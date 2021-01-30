@@ -1,61 +1,68 @@
 /** @file         sconfig_item.c
- *  @brief        简要说明
+ *  @brief        解析 键值对的有关实现
  *  @details      详细说明
  *  @author       Schips
  *  @date         2021-01-28 10:52:17
  *  @version      v1.0
  *  @copyright    Copyright By Schips, All Rights Reserved
- *
- **********************************************************
- *
- *  @attention    NOTE
- *                SDK: 
- *                ENV: 
- *  @par 修改日志:
- *  <table>
- *  <tr><th>Date       <th>Version   <th>Author    <th>Description
- *  <tr><td>2021-01-28 <td>1.0       <td>Schips    <td>创建初始版本
- *  </table>
- *
- **********************************************************
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "openfsm.h"
 #include "sconfig.h"
 #include "sconfig_item.h"
 
 // 每次解析时用于存放解析字符的容器
-static char tmp_item_name[128]; 
-static int  tmp_item_name_index;
+static char tmp_var_buff[516]; 
+static int  tmp_var_buff_index;
 //static int  tmp_item_flag;
 
-void init_tmp_item_name(void)
+void init_tmp_var_buff(void)
 {
-    //printf("init_tmp_item_name\n");
-    memset(tmp_item_name, 0, sizeof(tmp_item_name));
-    tmp_item_name_index = 0;
+    memset(tmp_var_buff, 0, sizeof(tmp_var_buff));
+    tmp_var_buff_index = 0;
 }
 
-char *get_tmp_item_name(void)
+char *get_tmp_buff_entry(void)
 {
-    //printf("get_tmp_item_name : [%s]\n", tmp_item_name);
-    return tmp_item_name;
+    printf("-->Current tmp buff has: {%s}\n", tmp_var_buff);
+    return tmp_var_buff;
 }
 
-char push_item_name(char ch)
+char push_ch_to_tmp_buff(char ch)
 {
-    if (tmp_item_name_index > sizeof(tmp_item_name))
+    if (tmp_var_buff_index >= sizeof(tmp_var_buff))
     {
-        return;
+        return '\0';
     }
-    tmp_item_name[tmp_item_name_index]   = ch;
-    //tmp_item_name[tmp_item_name_index+1] = '\0';
-    tmp_item_name_index++;
-    //printf("%c\n", ch);
+
+    tmp_var_buff[tmp_var_buff_index]     = ch;
+    tmp_var_buff[sizeof(tmp_var_buff)-1] = '\0';
+
+    tmp_var_buff_index++;
+    return ch;
 }
 
-void* step_item_get_chars_start(void* this_fsm) //计数
+// 把临时缓冲区中的数据复制作为当前的key
+int save_tmp_var_as_cur_key(void)
+{
+    get_tmp_buff_entry();
+    init_tmp_var_buff();
+
+    return 0;
+}
+
+// 把临时缓冲区中的数据复制作为当前的key
+int save_tmp_var_as_cur_val(void)
+{
+    get_tmp_buff_entry();
+    init_tmp_var_buff();
+
+    return 0;
+}
+
+void* step_item_get_chars_start(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -80,72 +87,62 @@ void* step_item_get_chars_start(void* this_fsm) //计数
         // 否则进入获取连续字符模式
         default:
             set_next_state(this_fsm, state_item_get_key);
-            //push_item_name(conf->p_tmp_buff[0]);
-            //conf->p_tmp_buff++;
             break;
     }
 
     return NULL;
 }
 
-void* step_item_get_key(void* this_fsm) //计数完成
+void* step_item_get_key(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
     switch(conf->p_tmp_buff[0])
     {
-        // 跳过 键之间的 空白字符
+        // 跳过 键之间的 空白字符(键内的空格会被合并)
         case '\t' :
         case ' '  :
-            //printf("Skip {%x}\n", conf->p_tmp_buff[0]);
             conf->p_tmp_buff++;
             break;
-        // 正常结束
+        // 获取 键 完成, 准备获取 值
         case '='  :
-            //push_item_name('\0');
-            printf("[===], key is {%s}\n", get_tmp_item_name());
-            init_tmp_item_name();
+            save_tmp_var_as_cur_key();
             set_next_state(this_fsm, state_item_get_val);
             break;
 
         default :
             // 累计到item中
-            push_item_name(conf->p_tmp_buff[0]);
+            push_ch_to_tmp_buff(conf->p_tmp_buff[0]);
             conf->p_tmp_buff++;
             break;
     }
     return NULL;
 }
 
-void* step_item_get_val(void* this_fsm) //计数完成
+void* step_item_get_val(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
-    //printf("get val\n");
+
     switch(conf->p_tmp_buff[0])
     {
-#if 1
         case '\n' :
         case '\0' :
-            printf("[EOL], val is {%s}\n", get_tmp_item_name());
+            save_tmp_var_as_cur_val();
             set_next_state(this_fsm, state_item_head_done);
-            init_tmp_item_name();
             break;
         // 跳过 = 以后的 空白字符
         case '='  :
         case '\t' :
         case ' '  :
             conf->p_tmp_buff++;
-            //push_item_name('-');
-            break;
-        // 正常结束
+            //push_ch_to_tmp_buff('-');
             break;
 
         default :
             // 累计
-            push_item_name(conf->p_tmp_buff[0]);
+            push_ch_to_tmp_buff(conf->p_tmp_buff[0]);
             conf->p_tmp_buff++;
             break;
-#endif
     }
 
     return NULL;
@@ -153,8 +150,6 @@ void* step_item_get_val(void* this_fsm) //计数完成
 
 void* step_item_head_done(void* this_fsm)
 {
-    //init_tmp_item_name();
-    //printf("step_item_head_done\n" );
     return NULL;
 }
 

@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "openfsm.h"
 #include "sconfig.h"
@@ -25,9 +26,9 @@
 /* ------------------- Functions -----------------------------*/
 /* 状态机 函数指针 区域 */
 void* top_step_check_type(void* this_fsm);
-void* top_step_find_section(void* this_fsm);//计数
-void* top_step_find_item(void* this_fsm);//错误过程
-void* top_step_done(void* this_fsm);//计数完成
+void* top_step_find_section(void* this_fsm);
+void* top_step_find_item(void* this_fsm);
+void* top_step_done(void* this_fsm);
 
 
 /* 状态定义(这里的顺序要求与 procedure_list[] 一致) */
@@ -49,6 +50,8 @@ static Procedure procedure_list[] = {
 // 子状态 相关
 static FSM section_sub_fsm = {0};
 static FSM item_sub_fsm = {0};
+// Section 有关
+static char *cur_section = NULL;
 
 // 判断这一行是什么内容 : 注释， 节 还是 项
 void* top_step_check_type(void* this_fsm)
@@ -78,15 +81,24 @@ void* top_step_check_type(void* this_fsm)
             //printf("Skip this line:  %s", p_tmp_buff);
             set_next_state(this_fsm, top_state_done);
             break;
+        // 如果遇到 [ ，意味着这一行可能是 节名
         case '[':
             //printf("found section head : %s", p_tmp_buff);
             init_tmp_section_name();
             set_next_state(this_fsm, top_state_find_section);
             break;
+        // 如果遇到 ] ，意味着 节名 分析结束
         case ']':
-            //printf("found section end %s", p_tmp_buff);
             set_next_state(this_fsm, top_state_done);
-            get_tmp_section_name();
+            char * tmp_cur_section = get_tmp_section_name();
+            int len = strlen(tmp_cur_section) + 1;
+            cur_section = malloc(len + 1);
+            if(cur_section)
+            {
+                memcpy(cur_section, tmp_cur_section, len);
+                cur_section[len] = '\0';
+            }
+
             break;
 
         // 其他情况则是匹配的字符
@@ -108,16 +120,16 @@ void *try_insert_section(void *this_fsm, char *section_name)
 void* top_step_find_section(void* this_fsm) // 解析section头部信息
 {
     Config *conf_itself = get_data_entry(this_fsm);
-    struct section * sections; 
-    char *p_tmp_buff;
-    char *section_name;
+    //struct section * sections; 
+    //char *p_tmp_buff;
+    //char *section_name;
 
     if(!this_fsm)    return NULL;
     if(!conf_itself) return NULL;
 
-    p_tmp_buff = conf_itself->p_tmp_buff;
-    sections = conf_itself->sections;
-    section_name = p_tmp_buff;
+    //p_tmp_buff = conf_itself->p_tmp_buff;
+    //sections = conf_itself->sections;
+    //section_name = p_tmp_buff;
 
     run_state_machine_once(&section_sub_fsm);
     if(is_fsm_error(&section_sub_fsm))
@@ -139,16 +151,16 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
 void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
 {
     Config *conf_itself = get_data_entry(this_fsm);
-    struct section * sections; 
-    char *p_tmp_buff;
-    char *section_name;
+    //struct section * sections; 
+    //char *p_tmp_buff;
+    //char *section_name;
 
     if(!this_fsm)    return NULL;
     if(!conf_itself) return NULL;
 
-    p_tmp_buff = conf_itself->p_tmp_buff;
-    sections = conf_itself->sections;
-    section_name = p_tmp_buff;
+    //p_tmp_buff = conf_itself->p_tmp_buff;
+    //sections = conf_itself->sections;
+    //section_name = p_tmp_buff;
 
     run_state_machine_once(&item_sub_fsm);
     if(is_fsm_error(&item_sub_fsm))
@@ -168,36 +180,10 @@ void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
     return NULL;
 }
 
-void* top_step_done(void* this_fsm)//计数完成
+void* top_step_done(void* this_fsm)
 {
-#if 0
-    state sub_fsm_cur_state;
-    step_ret ret;
-
-    // 二阶状态机 调用
-    if(is_curr_state(&sub_fsm, sub_state_done))
-    {
-        set_next_state(this_fsm, top_state_done);
-    } else 
-    {
-        printf(" ├──Sub fsm : Before runing: %d\n", get_curr_state(&sub_fsm));
-
-        sub_fsm_cur_state = run_state_machine_once(&sub_fsm);
-
-        printf(" ├──Sub fsm : Ran :%d\n", sub_fsm_cur_state);
-        printf(" └──Sub fsm : Next :%d\n", get_next_state(&sub_fsm));
-        if(is_fsm_error(&sub_fsm))
-        {
-            printf("Error in sub\n");
-            ret = (step_ret) get_step_retval(&sub_fsm);
-            printf("Get err : %lld\n", ret);
-            set_next_state(this_fsm, top_state_done);
-        }
-    }
-#endif
     return NULL;
 }
-
 
 static void __sconfig_init_sub_fsm_once(Config * conf)
 {
@@ -225,7 +211,7 @@ static void __sconfig_init_top_fsm_once(Config * conf)
 
 static void __sconfig_parser_init(Config * conf)
 {
-    void * data_entry = conf->sections;
+    //void * data_entry = conf->sections;
     __sconfig_init_top_fsm_once(conf);
     __sconfig_init_sub_fsm_once(conf);
 }
@@ -252,6 +238,10 @@ int sconfig_init(Config * conf, char *conf_path)
     printf("Using [%s] as config\n", conf->conf_path);
     __sconfig_parser_init(conf);
 
+    // __sconfig_section_init();
+    if(cur_section) free(cur_section);
+    cur_section = NULL;
+
     return 0;
 }
 
@@ -259,7 +249,7 @@ int sconfig_init(Config * conf, char *conf_path)
 int sconfig_parse_line(Config * conf, char * buff)
 {
     FSM *fsm = &conf->parser_fsm;
-    state cur_state;
+    //state cur_state;
     if (!conf)       return -1;
     if (!buff)       return -1;
 
@@ -268,7 +258,8 @@ int sconfig_parse_line(Config * conf, char * buff)
     while(1)
     {
         // 状态机内，每次处理以字符为单位
-        cur_state = run_state_machine_once(fsm);
+        run_state_machine_once(fsm);
+        //cur_state = run_state_machine_once(fsm);
         //printf("FSM:%x\n", cur_state);
         if(is_curr_state(fsm, top_state_done))
         {
@@ -276,8 +267,8 @@ int sconfig_parse_line(Config * conf, char * buff)
             break;
         }
     }
-    return 0;
 
+    return 0;
 }
 
 int sconfig_read_all_config(Config * conf)

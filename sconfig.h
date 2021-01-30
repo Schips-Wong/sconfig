@@ -5,19 +5,6 @@
  *  @date         2021-01-27 13:57:37
  *  @version      v1.0
  *  @copyright    Copyright By Schips, All Rights Reserved
- *
- **********************************************************
- *
- *  @attention    NOTE
- *
- *
- *  @par 修改日志:
- *  <table>
- *  <tr><th>Date       <th>Version   <th>Author    <th>Description
- *  <tr><td>2021-01-27 <td>1.0       <td>Schips    <td>创建初始版本
- *  </table>
- *
- **********************************************************
  */
 
 #ifndef __SCONFIG__
