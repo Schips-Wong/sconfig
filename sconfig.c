@@ -54,10 +54,11 @@ static void __sconfig_init_sub_fsm_once(Config * conf)
 static void __sconfig_init_top_fsm_once(Config * conf)
 {
     static int init_flag = 0;
+    FSM *fsm = &conf->parser_fsm;
 
     if(init_flag) return;
-    FSM *fsm = &conf->parser_fsm;
     if(!fsm) return ;
+
     set_procedures(fsm,     get_top_procedure_list());
     set_data_entry(fsm,     conf);
     set_default_state(fsm,  get_top_procedure_default_state());
@@ -93,6 +94,11 @@ int sconfig_init(Config * conf, char *conf_path)
     if (!conf_path) return -1;
     __sconfig_set_path(conf, conf_path);
     __sconfig_parser_init(conf);
+
+    //todo reinit(内存泄漏)
+    conf->sections = NULL;
+    //conf->sections = malloc(sizeof(struct section));
+    //conf->sections->next = NULL;
 
     return 0;
 }
@@ -146,12 +152,23 @@ int sconfig_read_all_config(Config * conf)
     return read_section_cnt;
 }
 
+void sconfig_dump_session(struct section * head)
+{
+    struct section * cur = head;
+    while(cur)
+    {
+        printf("[%s](%p)\n", cur->section_name, cur->section_name);
+        cur = cur->next;
+    }
+
+}
+
 void sconfig_dump(Config * conf) 
 {
     if(!conf) return;
     printf("Conf path : %s\n", conf->conf_path);
 
-    //sconfig_dump_session()
+    sconfig_dump_session(conf->sections);
 
     return ;
 }

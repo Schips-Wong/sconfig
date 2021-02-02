@@ -34,6 +34,11 @@ char save_ch_in_tmp_var(char ch);
 
 // 将临时缓冲区的内容保存出来
 char* tmp_var_snapshot(void);
+int try_insert_section_in_config(Config * conf, char * section_name);
+
+// 设置当前 节
+void set_cur_section_name(char* section_name);
+char* get_cur_section_name(void);
 
 #endif /* Head define end*/
 

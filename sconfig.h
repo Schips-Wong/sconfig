@@ -28,7 +28,7 @@ struct item {
 // 定义
 struct section {
     char *section_name;
-    char *item;
+    struct items*items;
     struct section *next;
 };
 

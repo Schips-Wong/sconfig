@@ -16,7 +16,20 @@
 static char tmp_var_buff[516]; 
 static int  tmp_var_buff_index;
 // Section 有关
-//static char *cur_section = NULL;
+static char *cur_section = NULL;
+
+
+void set_cur_section_name(char* section_name)
+{
+    cur_section = section_name;
+    printf("set_cur_section_name : %p\n", cur_section);
+}
+
+char* get_cur_section_name(void)
+{
+    printf("get_cur_section_name : %s\n", cur_section);
+    return cur_section;
+}
 
 void init_tmp_var_buff(void)
 {
@@ -53,6 +66,7 @@ char* tmp_var_snapshot(void)
     int len = strlen(tmp_val) + 1;
     static char *cur;
 
+    // 这样的做法会导致 分段的配置项存在内存泄漏的风险 TODO
     cur = malloc(len + 1);
     if(cur)
     {
@@ -61,44 +75,75 @@ char* tmp_var_snapshot(void)
         init_tmp_var_buff();
         printf("Current : %s\n", cur);
     }
+
     return cur;
 }
 
 /* ------------------- Section 业务逻辑 有关内部接口 -----------------------------*/
 
-struct section * find_section_in_config(struct section *head, char * section_name)
+struct section * find_section_in_config(Config * conf, char * section_name)
 {
-#if 0
-    struct section *next =  head->next;
+    struct section *cur_section =  conf->sections;
 
-    if(!head) return NULL;
-    if(!section_name) return NULL;
+    if(!conf)         return NULL; 
+    if(!section_name) return NULL; 
 
-    while(next)
+    while(cur_section)
     {
-        printf("1, %s\n", next->section_name);
+        printf("1, %s\n", cur_section->section_name);
         printf("2, %s\n", section_name);
 
-        if(!strcmp(next->section_name, section_name))
+        if(!strcmp(cur_section->section_name, section_name))
         {
-            return next;
+            return cur_section;
         }
-        next = next->next;
+        cur_section = cur_section->next;
     }
-
-#endif
     return NULL;
 }
 
-int try_insert_section_in_config(Config * conf, struct section* section)
+struct section * new_section(void)
 {
+    return malloc(sizeof(struct section));
+}
+
+int try_insert_section_in_config(Config * conf, char * section_name)
+{
+    struct section *cur_section =  conf->sections;
+
+    if(!conf) return -1;
+    if(!section_name) return -1;
+    printf("try_insert_section_in_config\n");
+
+    while(cur_section)
+    {
+        if(!strcmp(cur_section->section_name, section_name))
+        {
+            return -1; // exist
+        }
+        cur_section = cur_section->next;
+    }
+
+    cur_section = new_section();
+    if(!cur_section) return -1;
+
+    cur_section->section_name = section_name;
+    cur_section->items = NULL;
+    // 头插
+    cur_section->next = conf->sections;
+    conf->sections    = cur_section;
+
     return 0;
 }
 
-int try_insert_item_in_section(struct section* section, struct item* item)
+int try_insert_item_in_section(Config * conf,
+                               struct section* section, 
+                               char *item_name)
 {
-    if(!section) return -1;
-    if(!item) return -1;
+    if(!conf)      return -1;
+    if(!section)   return -1;
+    if(!item_name) return -1;
+    //find_section_in_config
 
     return 0;
 }
