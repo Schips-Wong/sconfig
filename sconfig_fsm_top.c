@@ -103,6 +103,7 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
         set_next_state(section_sub_fsm, get_section_procedure_default_state());
         // 记住当前的节名
         set_cur_section_name(tmp_var_snapshot());
+        clean_tmp_var_snapshot();
         // 尝试插入配置中
         try_insert_section_in_config(conf_itself , get_cur_section_name());
     }

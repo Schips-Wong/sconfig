@@ -15,20 +15,26 @@
 // 每次解析时用于存放解析字符的容器
 static char tmp_var_buff[516]; 
 static int  tmp_var_buff_index;
-// Section 有关
-static char *cur_section = NULL;
+// 解析过程中需要的
+static char cur_section_name[CONFIG_NAME_MAX];
+//static char cur_key_name[CONFIG_NAME_MAX];
 
 
 void set_cur_section_name(char* section_name)
 {
-    cur_section = section_name;
-    printf("set_cur_section_name : %p\n", cur_section);
+    int len = strlen(section_name) + 1;
+
+    memset(cur_section_name, 0, sizeof(cur_section_name));
+    memcpy(cur_section_name, section_name, len);
+    cur_section_name[len] = '\0';
+
+    //printf("set_cur_section_name : %p\n", section_name);
 }
 
 char* get_cur_section_name(void)
 {
-    printf("get_cur_section_name : %s\n", cur_section);
-    return cur_section;
+    //printf("get_cur_section_name : %s\n", cur_section_name);
+    return cur_section_name;
 }
 
 void init_tmp_var_buff(void)
@@ -57,27 +63,19 @@ char save_ch_in_tmp_var(char ch)
     return ch;
 }
 
-// 将临时缓冲区的内容保存出来
-// 注意：这里申请的内存 要在别的地方释放
+#if 0
+// 清除 临时缓冲区
+void clean_tmp_var_snapshot(void)
+{
+    init_tmp_var_buff();
+}
+
+// 获取临时缓冲区 的数据入口
 char* tmp_var_snapshot(void)
 {
-    // 获取缓冲区数据
-    char * tmp_val = get_tmp_buff_entry();
-    int len = strlen(tmp_val) + 1;
-    static char *cur;
-
-    // 这样的做法会导致 分段的配置项存在内存泄漏的风险 TODO
-    cur = malloc(len + 1);
-    if(cur)
-    {
-        memcpy(cur, tmp_val, len);
-        cur[len] = '\0';
-        init_tmp_var_buff();
-        printf("Current : %s\n", cur);
-    }
-
-    return cur;
+    return  get_tmp_buff_entry();
 }
+#endif
 
 /* ------------------- Section 业务逻辑 有关内部接口 -----------------------------*/
 
@@ -110,10 +108,10 @@ struct section * new_section(void)
 int try_insert_section_in_config(Config * conf, char * section_name)
 {
     struct section *cur_section =  conf->sections;
+    int len = strlen(section_name) + 1;
 
     if(!conf) return -1;
     if(!section_name) return -1;
-    printf("try_insert_section_in_config\n");
 
     while(cur_section)
     {
@@ -127,7 +125,13 @@ int try_insert_section_in_config(Config * conf, char * section_name)
     cur_section = new_section();
     if(!cur_section) return -1;
 
-    cur_section->section_name = section_name;
+    // 保存名字
+    cur_section->section_name = malloc(CONFIG_NAME_MAX);
+    if(!cur_section->section_name) return -1;
+    memset(cur_section->section_name, 0, CONFIG_NAME_MAX);
+    memcpy(cur_section->section_name, section_name, len);
+
+    // 初始化item
     cur_section->items = NULL;
     // 头插
     cur_section->next = conf->sections;

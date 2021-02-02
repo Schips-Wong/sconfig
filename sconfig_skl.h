@@ -33,7 +33,10 @@ char *get_tmp_buff_entry(void);
 char save_ch_in_tmp_var(char ch);
 
 // 将临时缓冲区的内容保存出来
-char* tmp_var_snapshot(void);
+//char* tmp_var_snapshot(void);
+#define clean_tmp_var_snapshot init_tmp_var_buff
+#define tmp_var_snapshot get_tmp_buff_entry
+
 int try_insert_section_in_config(Config * conf, char * section_name);
 
 // 设置当前 节
