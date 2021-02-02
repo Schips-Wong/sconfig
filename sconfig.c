@@ -157,10 +157,10 @@ void sconfig_dump_item(struct item * head)
     struct item * cur = head;
     while(cur)
     {
-        printf("---[%s](%p)\n", cur->key_name, cur->key_name);
+        //printf("---[%s]:%s    (%p)\n", cur->key_name, (char*)cur->value,cur->key_name);
+        printf("   <%s>:[%s]\n", cur->key_name, (char*)cur->value);
         cur = cur->next;
     }
-
 }
 
 void sconfig_dump_session(struct section * head)
@@ -168,15 +168,9 @@ void sconfig_dump_session(struct section * head)
     struct section * cur = head;
     while(cur)
     {
-        printf("[%s](%p)\n", cur->section_name, cur->section_name);
+        //printf("[%s](%p)\n", cur->section_name, cur->section_name);
+        printf("[%s]\n", cur->section_name);
         sconfig_dump_item(cur->items);
-#if 0
-        while(cur_item)
-        {
-            cur_item = cur_item->next;
-            printf("---[%s](%p)\n", cur_item->key_name, cur_item->key_name);
-        }
-#endif
         cur = cur->next;
     }
 }
@@ -197,31 +191,5 @@ int main(int argc, char *argv[])
     sconfig_init(&conf, "./test.ini");
     sconfig_read_all_config(&conf);
     sconfig_dump(&conf);
-    //sconfig_dump_item_int_section(&conf);
-#if 0
-    int i = 10;
-    state cur_state;
-    FSM fsm_1 = {0};
-
-
-    while(i--)
-    {
-        printf("=================\n");
-        printf("Before runing: %d\n", get_curr_state(&fsm_1));
-
-        cur_state = run_state_machine_once(&fsm_1);
-
-        printf("Ran :%d\n", cur_state);
-        printf("Next :%d\n", get_next_state(&fsm_1));
-
-        // 停止条件
-        if(is_curr_state(&fsm_1, top_state_done))
-        {
-            printf("Done\n");
-            reset_state_machine(&fsm_1);
-            break;
-        }
-    }
-#endif
     return 0;
 }

@@ -85,6 +85,7 @@ void* step_item_get_val(void* this_fsm)
         case '\0' :
             //tmp_var_snapshot();
             set_next_state(this_fsm, state_item_head_done);
+            set_cur_val(tmp_var_snapshot());
             clean_tmp_var_snapshot();
             break;
         // 跳过 = 以后的 空白字符

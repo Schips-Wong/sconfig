@@ -44,8 +44,10 @@ void set_cur_section_name(char* section_name);
 char* get_cur_section_name(void);
 
 void set_cur_key_name(char* section_name);
-
 char* get_cur_key_name(void);
+
+void set_cur_val(char* val);
+void* get_cur_val(void);
 
 int try_insert_item_in_section(Config * conf,
                                char* section_name, 
