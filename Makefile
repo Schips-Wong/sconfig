@@ -73,7 +73,7 @@ CROSS_COMPLIE=
 # If not specified, Makefile will:
 #   for SRCDIRS, INCDIRS : search current directory recursively
 SRCDIRS   = .
-INCDIRS   = . ../../
+INCDIRS   = . 
 #   for LIBDIR : only the current directory will be serached.
 LIBDIR    =
 

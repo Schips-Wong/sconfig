@@ -17,17 +17,22 @@
     item1 = val
 
 */
+struct values {
+    void            *value;
+    struct item     *next;
+};
 
 struct item {
-    char *key_name;
-    void *value;
-    struct item *next;
+    char *          key_name;
+    void *          value;
+    struct values * vals;
+    struct item   * next;
 };
 
 // 定义
 struct section {
-    char *section_name;
-    struct item *items;
+    char *          section_name;
+    struct item *   items;
     struct section *next;
 };
 
@@ -36,12 +41,12 @@ struct section {
 typedef struct 
 {
 	// 对应的配置项文件路径
-    char conf_path[CONFIG_NAME_MAX];
+    char            conf_path[CONFIG_NAME_MAX];
 	// 所有的 配置节 (节中包括了n个配置项)
-    struct section * sections;
+    struct section  *sections;
     // 内置需要用来处理行数据的状态机
-    FSM parser_fsm;
-    char *p_tmp_buff;
+    FSM             parser_fsm;
+    char           *p_tmp_buff;
 } Config;
 
 void init_tmp_var_buff(void);

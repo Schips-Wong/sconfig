@@ -217,6 +217,7 @@ int try_insert_item_in_section(Config * conf,
         set_cur_section_name(DEFAULT_SECTION_NAME);
         cur_section = find_section_in_config(conf, DEFAULT_SECTION_NAME);
     }
+
     cur_item = cur_section->items;
 
     while(cur_item)
