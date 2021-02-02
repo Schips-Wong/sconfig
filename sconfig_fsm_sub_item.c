@@ -8,59 +8,12 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "openfsm.h"
 #include "sconfig.h"
-#include "sconfig_item.h"
-
-// 每次解析时用于存放解析字符的容器
-static char tmp_var_buff[516]; 
-static int  tmp_var_buff_index;
-//static int  tmp_item_flag;
-
-void init_tmp_var_buff(void)
-{
-    memset(tmp_var_buff, 0, sizeof(tmp_var_buff));
-    tmp_var_buff_index = 0;
-}
-
-char *get_tmp_buff_entry(void)
-{
-    printf("-->Current tmp buff has: {%s}\n", tmp_var_buff);
-    return tmp_var_buff;
-}
-
-char push_ch_to_tmp_buff(char ch)
-{
-    if (tmp_var_buff_index >= sizeof(tmp_var_buff))
-    {
-        return '\0';
-    }
-
-    tmp_var_buff[tmp_var_buff_index]     = ch;
-    tmp_var_buff[sizeof(tmp_var_buff)-1] = '\0';
-
-    tmp_var_buff_index++;
-    return ch;
-}
-
-// 把临时缓冲区中的数据复制作为当前的key
-int save_tmp_var_as_cur_key(void)
-{
-    get_tmp_buff_entry();
-    init_tmp_var_buff();
-
-    return 0;
-}
-
-// 把临时缓冲区中的数据复制作为当前的key
-int save_tmp_var_as_cur_val(void)
-{
-    get_tmp_buff_entry();
-    init_tmp_var_buff();
-
-    return 0;
-}
+#include "sconfig_skl.h"
+#include "sconfig_fsm_sub_item.h"
 
 void* step_item_get_chars_start(void* this_fsm)
 {
@@ -106,13 +59,14 @@ void* step_item_get_key(void* this_fsm)
             break;
         // 获取 键 完成, 准备获取 值
         case '='  :
-            save_tmp_var_as_cur_key();
+            tmp_var_snapshot();
+            //save_tmp_var_as_cur_key();
             set_next_state(this_fsm, state_item_get_val);
             break;
 
         default :
             // 累计到item中
-            push_ch_to_tmp_buff(conf->p_tmp_buff[0]);
+            save_ch_in_tmp_var(conf->p_tmp_buff[0]);
             conf->p_tmp_buff++;
             break;
     }
@@ -127,7 +81,7 @@ void* step_item_get_val(void* this_fsm)
     {
         case '\n' :
         case '\0' :
-            save_tmp_var_as_cur_val();
+            //tmp_var_snapshot();
             set_next_state(this_fsm, state_item_head_done);
             break;
         // 跳过 = 以后的 空白字符
@@ -135,12 +89,11 @@ void* step_item_get_val(void* this_fsm)
         case '\t' :
         case ' '  :
             conf->p_tmp_buff++;
-            //push_ch_to_tmp_buff('-');
             break;
 
         default :
             // 累计
-            push_ch_to_tmp_buff(conf->p_tmp_buff[0]);
+            save_ch_in_tmp_var(conf->p_tmp_buff[0]);
             conf->p_tmp_buff++;
             break;
     }

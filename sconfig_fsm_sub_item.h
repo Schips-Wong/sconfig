@@ -1,4 +1,4 @@
-/** @file         sconfig_item.h
+/** @file         sconfig_sub_item.h
  *  @brief        简要说明
  *  @details      详细说明
  *  @author       Schips

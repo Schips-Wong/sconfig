@@ -1,6 +1,5 @@
 /** @file         sconfig.h
- *  @brief        简要说明
- *  @details      详细说明
+ *  @brief        sconfig 对外接口
  *  @author       Schips
  *  @date         2021-01-27 13:57:37
  *  @version      v1.0
@@ -11,9 +10,11 @@
 #define __SCONFIG__
 
 /*
+ 
+我们所说的配置项是指形如下方提到的这类文件格式配置
 
-[section1]
-item1 = val
+    [section1]
+    item1 = val
 
 */
 
@@ -42,6 +43,12 @@ typedef struct
     FSM parser_fsm;
     char *p_tmp_buff;
 } Config;
+
+void init_tmp_var_buff(void);
+char *get_tmp_buff_entry(void);
+
+char save_ch_in_tmp_var(char ch);
+int set_curr_section_name(void);
 
 #endif /* Head define end*/
 

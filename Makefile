@@ -160,15 +160,15 @@ SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))
 HEADERS = $(foreach d,$(INCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))
 SRC_CXX = $(filter-out %.c,$(SOURCES))
 OBJS    = $(addsuffix .o, $(basename $(SOURCES)))
-DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
+#DEPS    = $(foreach f, $(OBJS), $(addprefix $(dir $(f))., $(patsubst %.o, %.d, $(notdir $(f)))))
 
 ## Define some useful variables.
 #DEP_OPT = $(shell if `$(CC) --version | grep -i "GCC" >/dev/null`; then \ 
-DEP_OPT = $(shell if `gcc --version | grep -i "GCC" >/dev/null`; then \
-                  echo "-MM"; else echo "-M"; fi )
-#DEPEND      = $(CC)  $(DEP_OPT)   $(CFLAGS) $(ALLFLAGS)
-DEPEND      = gcc  $(DEP_OPT)   $(CFLAGS) $(ALLFLAGS)
-DEPEND.d    = $(subst -g ,,$(DEPEND))
+# DEP_OPT = $(shell if `gcc --version | grep -i "GCC" >/dev/null`; then \
+#                   echo "-MM"; else echo "-M"; fi )
+# #DEPEND      = $(CC)  $(DEP_OPT)   $(CFLAGS) $(ALLFLAGS)
+# DEPEND      = gcc  $(DEP_OPT)   $(CFLAGS) $(ALLFLAGS)
+# DEPEND.d    = $(subst -g ,,$(DEPEND))
 COMPILE.c   = $(CC)   $(CFLAGS)   $(ALLFLAGS) -c
 COMPILE.cxx = $(CXX)  $(CXXFLAGS) $(ALLFLAGS) -c
 LINK.c      = $(CC)   $(CFLAGS)   $(ALLFLAGS) $(LDFLAGS)
@@ -181,39 +181,6 @@ LINK.cxx    = $(CXX)  $(CXXFLAGS) $(ALLFLAGS) $(LDFLAGS)
 
 all: $(PROGRAM)
 
-# Rules for creating dependency files (.d).
-#------------------------------------------
-.%.d:%.c
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.C
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.cc
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.cpp
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.CPP
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.c++
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.cp
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
-
-.%.d:%.cxx
-	@echo -n $(dir $<) > $@
-	@$(DEPEND.d) $< >> $@
 
 # Rules for generating object files (.o).
 #----------------------------------------
@@ -288,11 +255,11 @@ endif
 	@echo -e "\e[32m\u2713 \e[0m\c"
 	@echo "Made [$@]"
 
-ifndef NODEP
-ifneq ($(DEPS),)
--include $(DEPS)
-endif
-endif
+#ifndef NODEP
+#ifneq ($(DEPS),)
+#-include $(DEPS)
+#endif
+#endif
 
 clean:
 	@echo  -e "\e[31m\u2717 \e[0m\c"

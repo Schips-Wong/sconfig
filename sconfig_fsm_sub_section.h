@@ -10,6 +10,7 @@
 #define __SECOND_ORDER_FSM_DEMO_SUB_STATE__
 
 #include "openfsm.h"
+#include "sconfig_skl.h"
 
 void* step_section_head_start(void* this_fsm);
 void* step_section_get_chars_start(void* this_fsm);
