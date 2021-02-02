@@ -18,9 +18,8 @@
 
 */
 
-
 struct item {
-    char *item_name;
+    char *key_name;
     void *value;
     struct item *next;
 };
@@ -28,10 +27,11 @@ struct item {
 // 定义
 struct section {
     char *section_name;
-    struct items*items;
+    struct item *items;
     struct section *next;
 };
 
+#define DEFAULT_SECTION_NAME "ANONYMOUS"
 #define CONFIG_NAME_MAX 512
 typedef struct 
 {

@@ -131,8 +131,11 @@ void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
     {
         set_next_state(this_fsm,         top_state_check_type);
         set_next_state(item_sub_fsm, get_item_procedure_default_state());
-        //tmp_var_snapshot();
-        //try_insert_item_in_section(conf_itself, get_cur_section_name(), tmp_var_snapshot());
+
+        // 尝试插入配置中
+        //set_cur_key_name(tmp_var_snapshot());
+        //clean_tmp_var_snapshot();
+        try_insert_item_in_section(conf_itself, get_cur_section_name(), get_cur_key_name());
     }
 
     return NULL;

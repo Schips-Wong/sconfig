@@ -47,8 +47,8 @@ static inline Procedure* get_item_procedure_list(void)
     return item_procedure_list;
 }
 
-char *get_tmp_item_name(void);
-void init_tmp_item_name(void);
+char *get_tmp_key_name(void);
+void init_tmp_key_name(void);
 
 #endif /* Head define end*/
 

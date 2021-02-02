@@ -145,11 +145,22 @@ int sconfig_read_all_config(Config * conf)
 
     while (fgets(buff, sizeof(buff), fp) != NULL)
     {
-        printf("Handling : |%s", buff);
+        //printf("Handling : |%s", buff);
         sconfig_parse_line(conf, buff);
     }
 
     return read_section_cnt;
+}
+
+void sconfig_dump_item(struct item * head)
+{
+    struct item * cur = head;
+    while(cur)
+    {
+        printf("---[%s](%p)\n", cur->key_name, cur->key_name);
+        cur = cur->next;
+    }
+
 }
 
 void sconfig_dump_session(struct section * head)
@@ -158,9 +169,16 @@ void sconfig_dump_session(struct section * head)
     while(cur)
     {
         printf("[%s](%p)\n", cur->section_name, cur->section_name);
+        sconfig_dump_item(cur->items);
+#if 0
+        while(cur_item)
+        {
+            cur_item = cur_item->next;
+            printf("---[%s](%p)\n", cur_item->key_name, cur_item->key_name);
+        }
+#endif
         cur = cur->next;
     }
-
 }
 
 void sconfig_dump(Config * conf) 

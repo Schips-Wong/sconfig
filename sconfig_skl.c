@@ -17,8 +17,7 @@ static char tmp_var_buff[516];
 static int  tmp_var_buff_index;
 // 解析过程中需要的
 static char cur_section_name[CONFIG_NAME_MAX];
-//static char cur_key_name[CONFIG_NAME_MAX];
-
+static char cur_key_name[CONFIG_NAME_MAX];
 
 void set_cur_section_name(char* section_name)
 {
@@ -27,14 +26,25 @@ void set_cur_section_name(char* section_name)
     memset(cur_section_name, 0, sizeof(cur_section_name));
     memcpy(cur_section_name, section_name, len);
     cur_section_name[len] = '\0';
-
-    //printf("set_cur_section_name : %p\n", section_name);
 }
 
 char* get_cur_section_name(void)
 {
-    //printf("get_cur_section_name : %s\n", cur_section_name);
     return cur_section_name;
+}
+
+void set_cur_key_name(char* section_name)
+{
+    int len = strlen(section_name) + 1;
+
+    memset(cur_key_name, 0, sizeof(cur_key_name));
+    memcpy(cur_key_name, section_name, len);
+    cur_key_name[len] = '\0';
+}
+
+char* get_cur_key_name(void)
+{
+    return cur_key_name;
 }
 
 void init_tmp_var_buff(void)
@@ -45,7 +55,6 @@ void init_tmp_var_buff(void)
 
 char *get_tmp_buff_entry(void)
 {
-    //printf("-->Current tmp buff has: {%s}\n", tmp_var_buff);
     return tmp_var_buff;
 }
 
@@ -63,20 +72,6 @@ char save_ch_in_tmp_var(char ch)
     return ch;
 }
 
-#if 0
-// 清除 临时缓冲区
-void clean_tmp_var_snapshot(void)
-{
-    init_tmp_var_buff();
-}
-
-// 获取临时缓冲区 的数据入口
-char* tmp_var_snapshot(void)
-{
-    return  get_tmp_buff_entry();
-}
-#endif
-
 /* ------------------- Section 业务逻辑 有关内部接口 -----------------------------*/
 
 struct section * find_section_in_config(Config * conf, char * section_name)
@@ -88,8 +83,8 @@ struct section * find_section_in_config(Config * conf, char * section_name)
 
     while(cur_section)
     {
-        printf("1, %s\n", cur_section->section_name);
-        printf("2, %s\n", section_name);
+        //printf("1, %s\n", cur_section->section_name);
+        //printf("2, %s\n", section_name);
 
         if(!strcmp(cur_section->section_name, section_name))
         {
@@ -100,9 +95,35 @@ struct section * find_section_in_config(Config * conf, char * section_name)
     return NULL;
 }
 
+struct item * find_key_in_section(struct section *section, char * key_name)
+{
+    struct item *cur_item =  section->items;
+
+    if(!section)     return NULL; 
+    if(!key_name) return NULL; 
+
+    while(cur_item)
+    {
+        printf("1, %s\n", cur_item->key_name);
+        printf("2, %s\n", key_name);
+
+        if(!strcmp(cur_item->key_name, key_name))
+        {
+            return cur_item;
+        }
+        cur_item = cur_item->next;
+    }
+    return NULL;
+}
+
 struct section * new_section(void)
 {
     return malloc(sizeof(struct section));
+}
+
+struct item * new_item(void)
+{
+    return malloc(sizeof(struct item));
 }
 
 int try_insert_section_in_config(Config * conf, char * section_name)
@@ -141,13 +162,63 @@ int try_insert_section_in_config(Config * conf, char * section_name)
 }
 
 int try_insert_item_in_section(Config * conf,
-                               struct section* section, 
-                               char *item_name)
+                               char* section_name, 
+                               char *key_name)
 {
+    struct section *cur_section = NULL;
+    struct item    *cur_item = NULL;
     if(!conf)      return -1;
-    if(!section)   return -1;
-    if(!item_name) return -1;
-    //find_section_in_config
+    if(!section_name)   return -1;
+    if(!key_name) return -1;
+
+    cur_section = find_section_in_config(conf, section_name);
+    //printf("find_section_in_config :%p\n", cur_section);
+    if(!cur_section) 
+    {
+        printf("[%s] Not found\n", section_name);
+        return 0;
+        printf("=================todo not found and as DEFAULT_SECTION_NAME\n");
+        set_cur_section_name(DEFAULT_SECTION_NAME);
+        cur_section = find_section_in_config(conf, DEFAULT_SECTION_NAME);
+    }
+    //printf("[%s]\n", cur_section->section_name);
+    cur_item = cur_section->items;
+
+    while(cur_item)
+    {
+        //printf("1, %s\n", cur_item->key_name);
+        //printf("2, %s\n", key_name);
+
+        if(!strcmp(cur_item->key_name, key_name))
+        {
+            return -1; // exist
+        }
+        cur_item = cur_item->next;
+    }
+
+    cur_item = new_item();
+    if(!cur_item) return -1;
+    cur_item->key_name = malloc(CONFIG_NAME_MAX);
+    if(!cur_item->key_name) return -1;
+    memset(cur_item->key_name, 0, CONFIG_NAME_MAX);
+    memcpy(cur_item->key_name, key_name, strlen(key_name));
+    cur_item->next     = cur_section->items;
+    cur_section->items = cur_item;
+
+#if 0
+    // 保存名字
+    cur_section->section_name = malloc(CONFIG_NAME_MAX);
+    if(!cur_section->section_name) return -1;
+    memset(cur_section->section_name, 0, CONFIG_NAME_MAX);
+    memcpy(cur_section->section_name, section_name, len);
+
+    // 初始化item
+    cur_section->items = NULL;
+    // 头插
+    cur_section->next = conf->sections;
+    conf->sections    = cur_section;
+
+#endif
 
     return 0;
 }

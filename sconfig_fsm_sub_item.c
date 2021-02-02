@@ -59,7 +59,9 @@ void* step_item_get_key(void* this_fsm)
             break;
         // 获取 键 完成, 准备获取 值
         case '='  :
-            tmp_var_snapshot();
+            // 保存 之前的内容为 key
+            set_cur_key_name(tmp_var_snapshot());
+            clean_tmp_var_snapshot();
             //save_tmp_var_as_cur_key();
             set_next_state(this_fsm, state_item_get_val);
             break;
@@ -83,6 +85,7 @@ void* step_item_get_val(void* this_fsm)
         case '\0' :
             //tmp_var_snapshot();
             set_next_state(this_fsm, state_item_head_done);
+            clean_tmp_var_snapshot();
             break;
         // 跳过 = 以后的 空白字符
         case '='  :
