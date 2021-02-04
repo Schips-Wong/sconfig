@@ -13,10 +13,11 @@
 #include "sconfig.h"
 
 // 每次解析时用于存放解析字符的容器
-static char tmp_var_buff[CONFIG_TMP_BUF_MAX]; 
-static int  tmp_var_buff_index;
-// 多个键值
 static struct values tmp_vals = {0};
+static struct values* last_vals;
+static char *tmp_var_buff;
+static int  tmp_var_buff_len;
+// 多个键值
 //static int    tmp_vals_cnt;
 #if 0
     void            *value;
@@ -85,35 +86,86 @@ char* get_cur_key_name(void)
     return cur_key_name;
 }
 
+
+void tmp_var_switch(void)
+{
+    struct values *node = NULL;
+
+    // 新建节点
+    node = malloc(sizeof(struct values));
+    printf("---new %p\n", node);
+    if(!node)
+    {
+        printf("Error when malloc\n");
+    }
+
+    node->value = malloc(CONFIG_TMP_BUF_MAX*(sizeof(char)));
+    if(!node->value)
+    {
+        printf("Error when malloc\n");
+    }
+    memset(node->value, 0, CONFIG_TMP_BUF_MAX*(sizeof(char)));
+
+    node->next = NULL;
+
+    // 切换之前，将当前的数据长度保存下来
+    last_vals->value_len = tmp_var_buff_len;
+    last_vals->next = node;
+
+    // 切换到 新 buff
+    tmp_var_buff = node->value;
+    tmp_var_buff_len = 0;
+    // 尾插
+    last_vals = node;
+}
+
 void init_tmp_var_buff(void)
 {
-#if 0
     static int init_flag = 0;
+    struct values *cur;
     struct values *next;
+    int i= 0;
 
     if(init_flag == 0)
     {
         tmp_vals.value = malloc(CONFIG_TMP_BUF_MAX*(sizeof(char)));
+        if(!tmp_vals.value)
+        {
+            printf("Error when malloc\n");
+        }
         tmp_vals.value_len = 0;
         tmp_vals.next = NULL;
-        printf("Malloc for tmp_var_buff : %p\n", tmp_vals.value);
+
+        printf("Malloc for tmp_var_buff [0]: %p\n", tmp_vals.value);
         init_flag = 1;
     }
+    last_vals = &tmp_vals;
 
-    next = tmp_vals.next;
-    while(next)
+    // 干掉其他组的数据（只有到遇到 ',' 才申请新的内存，并切换过去）
+    cur = tmp_vals.next;
+    printf("init_tmp_var_buff:::::while\n");
+    while(cur)
     {
-        printf("%p\n", next);
-        next = next->next;
+        printf("[%d] init and free : %p, %p\n", i, cur, cur->next);
+
+        next = cur->next;
+        free(cur->value);
+        free(cur);
+        cur = next;
+        i++;
+        if(i > 10) break;
     }
-#endif
-    memset(tmp_var_buff, 0, sizeof(tmp_var_buff));
-    tmp_var_buff_index = 0;
+    tmp_vals.next = NULL;
+
+    // 总是使用 多键值 的 第一组数据
+    tmp_var_buff = tmp_vals.value;
+    memset(tmp_var_buff, 0, CONFIG_TMP_BUF_MAX*(sizeof(char)));
+    tmp_var_buff_len = 0;
 }
 
 int get_tmp_var_buff_len(void)
 {
-    return  tmp_var_buff_index;
+    return  tmp_var_buff_len;
 }
 
 char *get_tmp_buff_entry(void)
@@ -123,15 +175,15 @@ char *get_tmp_buff_entry(void)
 
 char save_ch_in_tmp_var(char ch)
 {
-    if (tmp_var_buff_index >= sizeof(tmp_var_buff))
+    if (tmp_var_buff_len >= CONFIG_TMP_BUF_MAX*(sizeof(char)))
     {
         return '\0';
     }
 
-    tmp_var_buff[tmp_var_buff_index]     = ch;
-    tmp_var_buff[sizeof(tmp_var_buff)-1] = '\0';
+    tmp_var_buff[tmp_var_buff_len]     = ch;
+    tmp_var_buff[CONFIG_TMP_BUF_MAX*(sizeof(char))-1] = '\0';
 
-    tmp_var_buff_index++;
+    tmp_var_buff_len++;
     return ch;
 }
 

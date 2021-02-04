@@ -45,5 +45,6 @@ int try_insert_item_in_section(Config * conf,
                                char* section_name, 
                                char *key_name);
 
+void tmp_var_switch(void);
 #endif /* Head define end*/
 
