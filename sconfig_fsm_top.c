@@ -127,7 +127,7 @@ void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
     }
 
     // 如果判断完成则继续判断其他部分
-    if(is_section_procedure_done(item_sub_fsm))
+    if(is_item_procedure_done(item_sub_fsm))
     {
         set_next_state(this_fsm,         top_state_check_type);
         set_next_state(item_sub_fsm, get_item_procedure_default_state());
