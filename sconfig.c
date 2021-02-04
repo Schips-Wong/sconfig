@@ -172,13 +172,15 @@ void sconfig_dump_session(struct section * head)
         printf("[%s]\n", cur->section_name);
         sconfig_dump_item(cur->items);
         cur = cur->next;
+        printf("\n");
     }
 }
 
 void sconfig_dump(Config * conf) 
 {
     if(!conf) return;
-    printf("Conf path : %s\n", conf->conf_path);
+    printf("sconfig_dump\n");
+    printf("-- Conf path : %s\n", conf->conf_path);
 
     sconfig_dump_session(conf->sections);
 
@@ -188,8 +190,17 @@ void sconfig_dump(Config * conf)
 int main(int argc, char *argv[])
 {
     Config conf; 
+    struct item* host;
     sconfig_init(&conf, "./test.ini");
     sconfig_read_all_config(&conf);
+    host = sconfig_get_item_from_section(&conf, "section1", "host");
+
+    if(!host) {
+        printf("section/item not found\n");
+    }
+
+    printf("host = %s\n", (char *) sconfig_get_item_val(host));
+
     sconfig_dump(&conf);
     return 0;
 }

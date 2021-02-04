@@ -1,23 +1,9 @@
 /** @file         sconfig_skl.h
- *  @brief        简要说明
- *  @details      详细说明
+ *  @brief        Session、 key 、val 相关函数接口
  *  @author       Schips
  *  @date         2021-02-02 13:58:54
  *  @version      v1.0
  *  @copyright    Copyright By Schips, All Rights Reserved
- *
- **********************************************************
- *
- *  @attention    NOTE
- *
- *
- *  @par 修改日志:
- *  <table>
- *  <tr><th>Date       <th>Version   <th>Author    <th>Description
- *  <tr><td>2021-02-02 <td>1.0       <td>Schips    <td>创建初始版本
- *  </table>
- *
- **********************************************************
  */
 
 #ifndef __SCONFIG_SKL__
@@ -48,6 +34,12 @@ char* get_cur_key_name(void);
 
 void set_cur_val(char* val);
 void* get_cur_val(void);
+
+struct item *sconfig_get_item_from_section(Config * conf,
+                                           char* section_name,
+                                           char *key_name);
+
+void *sconfig_get_item_val(struct item* item);
 
 int try_insert_item_in_section(Config * conf,
                                char* section_name, 

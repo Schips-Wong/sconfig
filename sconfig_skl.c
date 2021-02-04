@@ -128,7 +128,7 @@ struct section * find_section_in_config(Config * conf, char * section_name)
     return NULL;
 }
 
-struct item * find_key_in_section(struct section *section, char * key_name)
+struct item * find_item_in_section(struct section *section, char * key_name)
 {
     struct item *cur_item =  section->items;
 
@@ -137,8 +137,8 @@ struct item * find_key_in_section(struct section *section, char * key_name)
 
     while(cur_item)
     {
-        printf("1, %s\n", cur_item->key_name);
-        printf("2, %s\n", key_name);
+        //printf("1, %s\n", cur_item->key_name);
+        //printf("2, %s\n", key_name);
 
         if(!strcmp(cur_item->key_name, key_name))
         {
@@ -196,8 +196,23 @@ int try_insert_section_in_config(Config * conf, char * section_name)
     return 0;
 }
 
+struct item *sconfig_get_item_from_section(Config * conf,
+                                           char* section_name, 
+                                           char *key_name)
+{
+    struct section *cur_section = NULL;
+
+    cur_section = find_section_in_config(conf, section_name);
+    return find_item_in_section(cur_section, key_name);
+}
+
+void *sconfig_get_item_val(struct item* item)
+{
+    return item->value;
+}
+
 int try_insert_item_in_section(Config * conf,
-                               char* section_name, 
+                               char* section_name,
                                char *key_name)
 {
     struct section *cur_section = NULL;
@@ -249,3 +264,4 @@ int try_insert_item_in_section(Config * conf,
 
     return 0;
 }
+
