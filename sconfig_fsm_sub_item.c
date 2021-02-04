@@ -75,8 +75,6 @@ void* step_item_get_key(void* this_fsm)
     return NULL;
 }
 
-// 单引号 SQM : single quotation marks
-// 双引号 DQM : double quotation marks
 void* step_item_get_val(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
@@ -104,6 +102,11 @@ void* step_item_get_val(void* this_fsm)
         case '\t' :
         case ' '  :
             conf->p_tmp_buff++;
+            break;
+        // 逗号 视为 一键多值
+        case ','  :
+            conf->p_tmp_buff++;
+            // TODO
             break;
 
         default :

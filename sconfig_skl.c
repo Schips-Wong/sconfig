@@ -13,8 +13,17 @@
 #include "sconfig.h"
 
 // 每次解析时用于存放解析字符的容器
-static char tmp_var_buff[516]; 
+static char tmp_var_buff[CONFIG_TMP_BUF_MAX]; 
 static int  tmp_var_buff_index;
+// 多个键值
+static struct values tmp_vals = {0};
+//static int    tmp_vals_cnt;
+#if 0
+    void            *value;
+    int             value_len;
+    struct item     *next;
+};
+#endif
 
 // 解析过程中需要的
 static char cur_section_name[CONFIG_NAME_MAX];
@@ -23,6 +32,7 @@ static int  cur_section_name_len;
 static char cur_key_name[CONFIG_NAME_MAX];
 static int  cur_key_name_len;
 
+// 单个键值
 static char cur_val[CONFIG_NAME_MAX];
 static int  cur_val_len;
 
@@ -77,6 +87,26 @@ char* get_cur_key_name(void)
 
 void init_tmp_var_buff(void)
 {
+#if 0
+    static int init_flag = 0;
+    struct values *next;
+
+    if(init_flag == 0)
+    {
+        tmp_vals.value = malloc(CONFIG_TMP_BUF_MAX*(sizeof(char)));
+        tmp_vals.value_len = 0;
+        tmp_vals.next = NULL;
+        printf("Malloc for tmp_var_buff : %p\n", tmp_vals.value);
+        init_flag = 1;
+    }
+
+    next = tmp_vals.next;
+    while(next)
+    {
+        printf("%p\n", next);
+        next = next->next;
+    }
+#endif
     memset(tmp_var_buff, 0, sizeof(tmp_var_buff));
     tmp_var_buff_index = 0;
 }

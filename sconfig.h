@@ -14,36 +14,39 @@
 我们所说的配置项是指形如下方提到的这类文件格式配置
 
     [section1]
-    item1 = val
+    key = val
 
 */
 struct values {
-    void            *value;
-    struct item     *next;
+    void           *value;
+    int             value_len;
+    struct values  *next;
 };
 
 struct item {
     char *          key_name;
-    void *          value;
-    struct values * vals;
-    struct item   * next;
+    void           *value;
+    //char          **value;
+    struct values  *vals;
+    struct item    *next;
 };
 
 // 定义
 struct section {
-    char *          section_name;
-    struct item *   items;
+    char           *section_name;
+    struct item    *items;
     struct section *next;
 };
 
 #define DEFAULT_SECTION_NAME "ANONYMOUS"
-#define CONFIG_NAME_MAX 512
+#define CONFIG_NAME_MAX      512
+#define CONFIG_TMP_BUF_MAX   1024
 typedef struct 
 {
 	// 对应的配置项文件路径
     char            conf_path[CONFIG_NAME_MAX];
 	// 所有的 配置节 (节中包括了n个配置项)
-    struct section  *sections;
+    struct section *sections;
     // 内置需要用来处理行数据的状态机
     FSM             parser_fsm;
     char           *p_tmp_buff;

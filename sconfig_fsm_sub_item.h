@@ -15,6 +15,8 @@
 void* step_item_get_chars_start(void* this_fsm);
 void* step_item_get_key(void* this_fsm);
 void* step_item_get_val(void* this_fsm);
+// 单引号 SQM : single quotation marks
+// 双引号 DQM : double quotation marks
 void* step_item_get_val_sqm(void* this_fsm);
 void* step_item_get_val_dqm(void* this_fsm);
 void* step_item_head_done(void* this_fsm);
