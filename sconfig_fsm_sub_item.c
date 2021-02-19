@@ -61,7 +61,8 @@ void* step_item_get_key(void* this_fsm)
         case '='  :
             // 保存 之前的内容为 key
             set_cur_key_name(tmp_var_snapshot());
-            clean_tmp_var_snapshot();
+            
+            init_tmp_var_buff();
             //save_tmp_var_as_cur_key();
             set_next_state(this_fsm, state_item_get_val);
             break;
@@ -92,10 +93,11 @@ void* step_item_get_val(void* this_fsm)
             break;
         case '\n' :
         case '\0' :
+            // 结束。处理
             set_next_state(this_fsm, state_item_head_done);
             clr_fsm_error_flag(this_fsm);
             set_cur_val(tmp_var_snapshot());
-            clean_tmp_var_snapshot();
+            //clean_tmp_var_snapshot();
             break;
         // 跳过 = 以后的 空白字符
         case '='  :
@@ -142,7 +144,7 @@ void* step_item_get_val_sqm(void* this_fsm)
             conf->p_tmp_buff++;
             set_next_state(this_fsm, state_item_head_done);
             set_cur_val(tmp_var_snapshot());
-            clean_tmp_var_snapshot();
+            //clean_tmp_var_snapshot();
             break;
 
         // 引号中的 空格
@@ -172,7 +174,7 @@ void* step_item_get_val_dqm(void* this_fsm)
             conf->p_tmp_buff++;
             set_next_state(this_fsm, state_item_head_done);
             set_cur_val(tmp_var_snapshot());
-            clean_tmp_var_snapshot();
+            //clean_tmp_var_snapshot();
             break;
 
         // 引号中的 空格

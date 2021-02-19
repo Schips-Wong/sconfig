@@ -15,6 +15,7 @@
 // 每次解析时用于存放解析字符的容器
 static struct values tmp_vals = {0};
 static struct values* last_vals;
+static int    values_cnt;
 static char *tmp_var_buff;
 static int  tmp_var_buff_len;
 // 多个键值
@@ -86,7 +87,7 @@ char* get_cur_key_name(void)
     return cur_key_name;
 }
 
-
+// 切换 数据
 void tmp_var_switch(void)
 {
     struct values *node = NULL;
@@ -110,13 +111,19 @@ void tmp_var_switch(void)
 
     // 切换之前，将当前的数据长度保存下来
     last_vals->value_len = tmp_var_buff_len;
-    last_vals->next = node;
 
     // 切换到 新 buff
     tmp_var_buff = node->value;
     tmp_var_buff_len = 0;
     // 尾插
+    last_vals->next = node;
     last_vals = node;
+    values_cnt ++;
+}
+
+struct values* get_vals_head(void)
+{
+    return &tmp_vals;
 }
 
 void init_tmp_var_buff(void)
@@ -140,6 +147,7 @@ void init_tmp_var_buff(void)
         init_flag = 1;
     }
     last_vals = &tmp_vals;
+    values_cnt = 0;
 
     // 干掉其他组的数据（只有到遇到 ',' 才申请新的内存，并切换过去）
     cur = tmp_vals.next;
@@ -198,9 +206,6 @@ struct section * find_section_in_config(Config * conf, char * section_name)
 
     while(cur_section)
     {
-        //printf("1, %s\n", cur_section->section_name);
-        //printf("2, %s\n", section_name);
-
         if(!strcmp(cur_section->section_name, section_name))
         {
             return cur_section;
@@ -219,9 +224,6 @@ struct item * find_item_in_section(struct section *section, char * key_name)
 
     while(cur_item)
     {
-        //printf("1, %s\n", cur_item->key_name);
-        //printf("2, %s\n", key_name);
-
         if(!strcmp(cur_item->key_name, key_name))
         {
             return cur_item;
@@ -339,6 +341,36 @@ int try_insert_item_in_section(Config * conf,
     cur_item->value = malloc(cur_val_len);
     memcpy(cur_item->key_name, key_name, strlen(key_name));
     memcpy(cur_item->value, get_cur_val(), cur_val_len);
+    
+    // 多值的处理
+    // 由于临时缓冲区每次处理之前会清空，因此需要拷贝出来
+    struct values * cur_vals  = get_vals_head();
+
+#if 0
+    struct values * vals_now ;
+    struct values * vals_next;
+    struct values * vals_prev;
+#endif
+    // 遍历所有的 保存值， 申请内存并将值复制进去
+    while(cur_vals)
+    {
+        printf("      [--%s]\n", (char*)cur_vals->value);
+        cur_item->vals = malloc(sizeof(struct values));
+
+        cur_item->vals->value = malloc(cur_vals->value_len + 1);
+        cur_item->vals->value_len = cur_vals->value_len;
+
+        memcpy(cur_item->vals->value, cur_vals->value, cur_vals->value_len);
+        printf("      [%s]\n", (char*)cur_item->vals->value);
+
+        //TODO *(char*)cur_item->vals->value + cur_vals->value_len = '\0';
+
+        // 为了实现尾插
+        //cur_item->vals->next = vals_prev;
+        last_vals = cur_item->vals;
+
+        cur_vals = cur_vals->next;
+    }
 
     // 头插到链表中
     cur_item->next     = cur_section->items;
