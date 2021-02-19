@@ -108,10 +108,9 @@ void* step_item_get_val(void* this_fsm)
         // 逗号 视为 一键多值
         case ','  :
             // 保存到新的地方
-            printf("Before switch : %s\n", (char*)get_tmp_buff_entry());
+            //printf("Before switch : %s\n", (char*)get_tmp_buff_entry());
             tmp_var_switch();
             conf->p_tmp_buff++;
-            // TODO
             break;
 
         default :
@@ -156,6 +155,7 @@ void* step_item_get_val_sqm(void* this_fsm)
             conf->p_tmp_buff++;
             break;
     }
+
     return NULL;
 }
 

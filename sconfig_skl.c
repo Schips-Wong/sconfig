@@ -20,12 +20,6 @@ static char *tmp_var_buff;
 static int  tmp_var_buff_len;
 // 多个键值
 //static int    tmp_vals_cnt;
-#if 0
-    void            *value;
-    int             value_len;
-    struct item     *next;
-};
-#endif
 
 // 解析过程中需要的
 static char cur_section_name[CONFIG_NAME_MAX];
@@ -48,6 +42,7 @@ void set_cur_val(char* val)
     memcpy(cur_val, val, len);
 
     cur_val_len = get_tmp_var_buff_len();
+    last_vals->value_len = tmp_var_buff_len;
 }
 
 void* get_cur_val(void)
@@ -94,7 +89,7 @@ void tmp_var_switch(void)
 
     // 新建节点
     node = malloc(sizeof(struct values));
-    printf("---new %p\n", node);
+    //printf("tmp_var_switch\n");printf("---new val-node %p\n", node);
     if(!node)
     {
         printf("Error when malloc\n");
@@ -131,7 +126,6 @@ void init_tmp_var_buff(void)
     static int init_flag = 0;
     struct values *cur;
     struct values *next;
-    int i= 0;
 
     if(init_flag == 0)
     {
@@ -143,7 +137,7 @@ void init_tmp_var_buff(void)
         tmp_vals.value_len = 0;
         tmp_vals.next = NULL;
 
-        printf("Malloc for tmp_var_buff [0]: %p\n", tmp_vals.value);
+        //printf("Malloc for tmp_var_buff [0]: %p\n", tmp_vals.value);
         init_flag = 1;
     }
     last_vals = &tmp_vals;
@@ -151,17 +145,15 @@ void init_tmp_var_buff(void)
 
     // 干掉其他组的数据（只有到遇到 ',' 才申请新的内存，并切换过去）
     cur = tmp_vals.next;
-    printf("init_tmp_var_buff:::::while\n");
+    //printf("init_tmp_var_buff:::::while\n");
     while(cur)
     {
-        printf("[%d] init and free : %p, %p\n", i, cur, cur->next);
+        //printf("[%d] init and free : %p, %p\n", i, cur, cur->next);
 
         next = cur->next;
         free(cur->value);
         free(cur);
         cur = next;
-        i++;
-        if(i > 10) break;
     }
     tmp_vals.next = NULL;
 
@@ -301,13 +293,16 @@ int try_insert_item_in_section(Config * conf,
 {
     struct section *cur_section = NULL;
     struct item    *cur_item = NULL;
+    struct values * cur_vals  = get_vals_head();
+    struct values vvals_head;
+    struct values * vvals_now;
 
     if(!conf)      return -1;
     if(!section_name)   return -1;
     if(!key_name) return -1;
 
     cur_section = find_section_in_config(conf, section_name);
-    //printf("find_section_in_config :%p\n", cur_section);
+    //printf("try_insert_item_in_section :%s\n", section_name);
     if(!cur_section) 
     {
         printf("[%s] Not found\n", section_name);
@@ -342,35 +337,37 @@ int try_insert_item_in_section(Config * conf,
     memcpy(cur_item->key_name, key_name, strlen(key_name));
     memcpy(cur_item->value, get_cur_val(), cur_val_len);
     
-    // 多值的处理
-    // 由于临时缓冲区每次处理之前会清空，因此需要拷贝出来
-    struct values * cur_vals  = get_vals_head();
-
-#if 0
-    struct values * vals_now ;
-    struct values * vals_next;
-    struct values * vals_prev;
-#endif
+    // 一键多值的拷贝
+    /*
+       考点：仅用一次遍历，完成新链表的链接
+		1. 创建一个虚拟的头，在这个头的后面链接真正的节点
+        2. 在处理结束以后，将头指向真正的头结点
+	*/
+    vvals_now       = &vvals_head;
     // 遍历所有的 保存值， 申请内存并将值复制进去
     while(cur_vals)
     {
-        printf("      [--%s]\n", (char*)cur_vals->value);
-        cur_item->vals = malloc(sizeof(struct values));
+        //printf("[%s]\n", (char*)cur_vals->value);
 
+        cur_item->vals = malloc(sizeof(struct values));
         cur_item->vals->value = malloc(cur_vals->value_len + 1);
         cur_item->vals->value_len = cur_vals->value_len;
 
         memcpy(cur_item->vals->value, cur_vals->value, cur_vals->value_len);
-        printf("      [%s]\n", (char*)cur_item->vals->value);
+        *(char*)(cur_item->vals->value + cur_vals->value_len) = '\0';
+        //printf("#%d#      [%s]\n", cur_vals->value_len, (char*)cur_item->vals->value);
 
-        //TODO *(char*)cur_item->vals->value + cur_vals->value_len = '\0';
 
-        // 为了实现尾插
-        //cur_item->vals->next = vals_prev;
-        last_vals = cur_item->vals;
+        // 延迟一个步长的遍历链接
+        //printf("[copy %p]  vvals_now  %p\n", cur_item->vals, vvals_now);
+        vvals_now->next = cur_item->vals;
 
+        // 切换到下一个节点
         cur_vals = cur_vals->next;
+
+        vvals_now = vvals_now->next;
     }
+    cur_item->vals = vvals_head.next;
 
     // 头插到链表中
     cur_item->next     = cur_section->items;

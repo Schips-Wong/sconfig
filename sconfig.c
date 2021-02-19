@@ -152,16 +152,31 @@ int sconfig_read_all_config(Config * conf)
     return read_section_cnt;
 }
 
+void sconfig_dump_vals(struct values * head)
+{
+    struct values * cur_vals  = head;
+    // 遍历所有的 保存值， 申请内存并将值复制进去
+    while(cur_vals)
+    {
+        printf("  %p  #%3d : [%s]\n", cur_vals, cur_vals->value_len, (char*)cur_vals->value);
+        cur_vals = cur_vals->next;
+    }
+
+}
+
 void sconfig_dump_item(struct item * head)
 {
     struct item * cur = head;
     while(cur)
     {
-        //printf("---[%s]:%s    (%p)\n", cur->key_name, (char*)cur->value,cur->key_name);
-        printf("   <%s>:[%s]\n", cur->key_name, (char*)cur->value);
+        //printf("   <%s>:[%s]\n", cur->key_name, (char*)cur->value);
+        printf("-key : %s\n", cur->key_name);
+        sconfig_dump_vals(cur->vals);
+
         cur = cur->next;
     }
 }
+
 
 void sconfig_dump_session(struct section * head)
 {
@@ -181,6 +196,7 @@ void sconfig_dump(Config * conf)
     if(!conf) return;
     printf("sconfig_dump\n");
     printf("-- Conf path : %s\n", conf->conf_path);
+    printf("\n");
 
     sconfig_dump_session(conf->sections);
 
