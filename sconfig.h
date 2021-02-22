@@ -58,5 +58,8 @@ char *get_tmp_buff_entry(void);
 char save_ch_in_tmp_var(char ch);
 int set_curr_section_name(void);
 
+// 要求 声明变量的同时需要将有关的内容清空
+#define DECLARE_CONFIG(name)  Config name = {0}
+
 #endif /* Head define end*/
 

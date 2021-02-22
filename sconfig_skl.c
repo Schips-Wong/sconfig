@@ -368,6 +368,8 @@ int try_insert_item_in_section(Config * conf,
         vvals_now = vvals_now->next;
     }
     cur_item->vals = vvals_head.next;
+    // 确保最后一个值后面 是 NULL
+    vvals_now->next = NULL;
 
     // 头插到链表中
     cur_item->next     = cur_section->items;

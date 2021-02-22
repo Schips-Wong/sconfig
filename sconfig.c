@@ -76,29 +76,21 @@ static void __sconfig_parser_init(Config * conf)
 static int __sconfig_set_path(Config * conf, char * conf_path)
 {
     int path_len;
-    if (!conf_path) return -1;
+    if (!conf) return -1;
 
-	//conf->conf_path
-    path_len = strlen(conf_path);
-    if (path_len >= CONFIG_NAME_MAX) path_len = CONFIG_NAME_MAX -1;
+    if(!conf_path)
+    {
+        memset(conf->conf_path, 0, CONFIG_NAME_MAX);
+    } else 
+    {
+        path_len = strlen(conf_path);
+        if (path_len >= CONFIG_NAME_MAX) path_len = CONFIG_NAME_MAX -1;
 
-    strncpy(conf->conf_path, conf_path, path_len);
-    conf->conf_path[path_len] = '\0';
+        strncpy(conf->conf_path, conf_path, path_len);
+        conf->conf_path[path_len] = '\0';
+    }
+
     //printf("Using [%s] as config\n", conf->conf_path);
-    return 0;
-}
-
-int sconfig_init(Config * conf, char *conf_path)
-{
-    if (!conf)      return -1;
-    if (!conf_path) return -1;
-    __sconfig_set_path(conf, conf_path);
-    __sconfig_parser_init(conf);
-
-    //todo reinit(内存泄漏)
-    conf->sections = NULL;
-    //conf->sections = malloc(sizeof(struct section));
-    //conf->sections->next = NULL;
 
     return 0;
 }
@@ -129,39 +121,98 @@ int sconfig_parse_line(Config * conf, char * buff)
     return 0;
 }
 
-int sconfig_read_all_config(Config * conf)
+int sconfig_init(Config * conf, char *conf_path)
 {
-    int read_section_cnt = 0;
-    //int read_size;
     FILE *fp;
-    char buff[1024];
-    if (!conf)       return -1;
+    static char buff[1024];
+    struct section *sections;
+    struct section *ssafe;
+    struct item *items;
+    struct item *isafe;
+    struct values *values;
+    struct values *vsafe;
+    if (!conf)      return -1;
+    //printf("Set path %p\n", conf_path);
+    __sconfig_set_path(conf, conf_path);
+    __sconfig_parser_init(conf);
+
+    //printf("Free all (if have)\n");
+    sections = conf->sections; 
+    while(sections)
+    {
+        ssafe = sections->next;
+        //printf("Free Section: %p\n", sections);
+        items = sections->items;
+        while(items)
+        {
+            isafe = items->next;
+            //printf("--Free item: %p\n", items);
+
+            values = items->vals;
+            while(values)
+            {
+                vsafe = values->next;
+                //printf("----Free val: %p\n", values);
+                free(values);
+                values = vsafe;
+            }
+            free(items);
+            //printf("--Next : %p\n", isafe);
+            items= isafe;
+        }
+        free(sections);
+        sections = ssafe;
+    }
+
+    conf->sections = NULL;
+
+    // 如果没有提供配置，则默认正常结束
+    if (!conf_path)
+    {
+        return 0;
+    }
+
     fp = fopen(conf->conf_path, "r");
     if(!fp) 
     {
+        printf("%s: ", conf->conf_path);
         perror("");
         return -1;
     }
 
+    memset(buff, 0, sizeof(buff));
+    // 按行为单位来处理
     while (fgets(buff, sizeof(buff), fp) != NULL)
     {
         //printf("Handling : |%s", buff);
         sconfig_parse_line(conf, buff);
     }
 
-    return read_section_cnt;
+    return 0;
+}
+
+void sconfig_deinit(Config * conf)
+{
+    //printf("sconfig_deinit\n");
+    sconfig_init(conf, NULL);
+}
+
+void sconfig_reload(Config * conf)
+{
+    //printf("sconfig_reload is %s\n", conf->conf_path);
+    sconfig_init(conf, conf->conf_path);
 }
 
 void sconfig_dump_vals(struct values * head)
 {
     struct values * cur_vals  = head;
-    // 遍历所有的 保存值， 申请内存并将值复制进去
+
     while(cur_vals)
     {
         printf("  %p  #%3d : [%s]\n", cur_vals, cur_vals->value_len, (char*)cur_vals->value);
+        //printf("Going to next, %p/%p\n", cur_vals, cur_vals->next);
         cur_vals = cur_vals->next;
     }
-
 }
 
 void sconfig_dump_item(struct item * head)
@@ -169,14 +220,11 @@ void sconfig_dump_item(struct item * head)
     struct item * cur = head;
     while(cur)
     {
-        //printf("   <%s>:[%s]\n", cur->key_name, (char*)cur->value);
         printf("-key : %s\n", cur->key_name);
         sconfig_dump_vals(cur->vals);
-
         cur = cur->next;
     }
 }
-
 
 void sconfig_dump_session(struct section * head)
 {
@@ -194,21 +242,32 @@ void sconfig_dump_session(struct section * head)
 void sconfig_dump(Config * conf) 
 {
     if(!conf) return;
-    printf("sconfig_dump\n");
+    printf("=======================\n");
     printf("-- Conf path : %s\n", conf->conf_path);
     printf("\n");
 
+    printf("sconfig_dump_sessionn");
     sconfig_dump_session(conf->sections);
+    printf("=======================\n\n");
 
     return ;
 }
 
 int main(int argc, char *argv[])
 {
-    Config conf; 
+    int ret;
+    DECLARE_CONFIG(conf);
+
+    // 通过指定的配置文件进行初始化，会将所有能够解析的节点读进内存
+    ret = sconfig_init(&conf, "./test.ini");
+    //sconfig_read_all_config(&conf);
+
+    if(ret)
+    {
+        printf("sconfig init error\n");
+    }
+
     struct item* host;
-    sconfig_init(&conf, "./test.ini");
-    sconfig_read_all_config(&conf);
     host = sconfig_get_item_from_section(&conf, "section1", "host");
 
     if(!host) {
@@ -216,7 +275,19 @@ int main(int argc, char *argv[])
     }
 
     printf("host = %s\n", (char *) sconfig_get_item_val(host));
+    printf("\n");
 
+    printf("------------------sconfig_reload\n");
+    sconfig_reload(&conf);
+    sconfig_dump(&conf);
+
+    printf("------------------sconfig_deinit\n");
+    sconfig_deinit(&conf);
+    sconfig_dump(&conf);
+
+    printf("------------------sconfig_init\n");
+    ret = sconfig_init(&conf, "./test.ini");
     sconfig_dump(&conf);
     return 0;
 }
+
