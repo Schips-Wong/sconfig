@@ -6,8 +6,6 @@
  *  @copyright    Copyright By Schips, All Rights Reserved
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 
 #include "openfsm.h"
@@ -36,7 +34,6 @@ FSM *get_item_sub_fsm(void)
 void* top_step_check_type(void* this_fsm)
 {
     Config *conf_itself = get_data_entry(this_fsm);
-    //struct section * sections; 
     char *p_tmp_buff;
 
     if(!this_fsm)    return NULL;
@@ -47,7 +44,7 @@ void* top_step_check_type(void* this_fsm)
 
     switch(p_tmp_buff[0])
     {
-        // 跳过 '['  之前的 空格
+        // 跳过 空格
         case '\t':
         case ' ':
             conf_itself->p_tmp_buff++;
@@ -80,11 +77,11 @@ void* top_step_check_type(void* this_fsm)
     return NULL;
 }
 
+// 解析Section
 void* top_step_find_section(void* this_fsm) // 解析section头部信息
 {
     Config *conf_itself = get_data_entry(this_fsm);
     FSM *section_sub_fsm = get_section_sub_fsm();
-    //char * cur_section;
 
     if(!this_fsm)    return NULL;
     if(!conf_itself) return NULL;
@@ -92,7 +89,7 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
     run_state_machine_once(section_sub_fsm);
     if(is_fsm_error(section_sub_fsm))
     {
-        printf("top_step_find_section err\n");
+        //printf("top_step_find_section err\n");
         set_next_state(section_sub_fsm, get_section_procedure_default_state());
     }
 
@@ -111,7 +108,8 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
     return NULL;
 }
 
-void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
+// 解析 item
+void* top_step_find_item(void* this_fsm) 
 {
     Config *conf_itself = get_data_entry(this_fsm);
     FSM *item_sub_fsm = get_item_sub_fsm();
@@ -122,7 +120,7 @@ void* top_step_find_item(void* this_fsm) // 解析 item 头部信息
     run_state_machine_once(item_sub_fsm);
     if(is_fsm_error(item_sub_fsm))
     {
-        printf("top_step_find_item err\n");
+        //printf("top_step_find_item err\n");
         set_next_state(item_sub_fsm, get_item_procedure_default_state());
     }
 

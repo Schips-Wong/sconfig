@@ -92,13 +92,13 @@ void tmp_var_switch(void)
     //printf("tmp_var_switch\n");printf("---new val-node %p\n", node);
     if(!node)
     {
-        printf("Error when malloc\n");
+        //perror("Error when malloc");
     }
 
     node->value = malloc(CONFIG_TMP_BUF_MAX*(sizeof(char)));
     if(!node->value)
     {
-        printf("Error when malloc\n");
+        //perror("Error when malloc\n");
     }
     memset(node->value, 0, CONFIG_TMP_BUF_MAX*(sizeof(char)));
 
@@ -132,12 +132,12 @@ void init_tmp_var_buff(void)
         tmp_vals.value = malloc(CONFIG_TMP_BUF_MAX*(sizeof(char)));
         if(!tmp_vals.value)
         {
-            printf("Error when malloc\n");
+            //perror("Error when malloc\n");
         }
         tmp_vals.value_len = 0;
         tmp_vals.next = NULL;
 
-        //printf("Malloc for tmp_var_buff [0]: %p\n", tmp_vals.value);
+        //perror("Malloc for tmp_var_buff [0]: %p\n", tmp_vals.value);
         init_flag = 1;
     }
     last_vals = &tmp_vals;
@@ -145,7 +145,6 @@ void init_tmp_var_buff(void)
 
     // 干掉其他组的数据（只有到遇到 ',' 才申请新的内存，并切换过去）
     cur = tmp_vals.next;
-    //printf("init_tmp_var_buff:::::while\n");
     while(cur)
     {
         //printf("[%d] init and free : %p, %p\n", i, cur, cur->next);
@@ -270,21 +269,6 @@ int try_insert_section_in_config(Config * conf, char * section_name)
     //printf("new section %s\n", section_name);
 
     return 0;
-}
-
-struct item *sconfig_get_item_from_section(Config * conf,
-                                           char* section_name, 
-                                           char *key_name)
-{
-    struct section *cur_section = NULL;
-
-    cur_section = find_section_in_config(conf, section_name);
-    return find_item_in_section(cur_section, key_name);
-}
-
-void *sconfig_get_item_val(struct item* item)
-{
-    return item->value;
 }
 
 int try_insert_item_in_section(Config * conf,

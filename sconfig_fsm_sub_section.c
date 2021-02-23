@@ -1,14 +1,12 @@
 /** @file         sconfig_section.c
- *  @brief        处理 项目节的有关状态机
+ *  @brief        fsm解析 节 有关
  *  @author       Schips
  *  @date         2021-01-22 19:03:20
  *  @version      v1.0
  *  @copyright    Copyright By Schips, All Rights Reserved
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "openfsm.h"
 #include "sconfig.h"
 #include "sconfig_skl.h"
@@ -19,9 +17,8 @@
 void* step_section_head_start(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
-    //conf->p_tmp_buff
 
-    //init_tmp_var_buff();
+    // 进入初始状态：认为以 节名 开头的才是真正的状态
     switch(conf->p_tmp_buff[0])
     {
         // 跳过[
@@ -29,7 +26,7 @@ void* step_section_head_start(void* this_fsm)
             conf->p_tmp_buff++;
             break;
         case ']'  :
-        // 如果 处理到遇到 行尾，则认为错误
+        // 如果 在一开始处理就遇到 行尾，则认为错误（不允许空节名）
         case '\0' :
         case '\n' :
             set_next_state(this_fsm, state_section_head_done);
@@ -43,6 +40,7 @@ void* step_section_head_start(void* this_fsm)
     return NULL;
 }
 
+// 跳过 Section 之前的字符
 void* step_section_get_chars_start(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
@@ -70,6 +68,7 @@ void* step_section_get_chars_start(void* this_fsm)
     return NULL;
 }
 
+// 获取 实际的 section（ Section 名中的空格 会被合并）
 void* step_section_get_chars_ing(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);

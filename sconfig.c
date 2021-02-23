@@ -1,21 +1,9 @@
 /** @file         sconfig.c
- *  @brief        简要说明
- *  @details      详细说明
+ *  @brief        sconfig 对外的接口实现
  *  @author       Schips
  *  @date         2021-02-02 13:42:13
  *  @version      v1.0
  *  @copyright    Copyright By Schips, All Rights Reserved
- *
- **********************************************************
- *
- *  @attention    NOTE
- *                SDK: 
- *                ENV: 
- *  @par 修改日志:
- *  <table>
- *  <tr><th>Date       <th>Version   <th>Author    <th>Description
- *  <tr><td>2021-02-02 <td>1.0       <td>Schips    <td>创建初始版本
- *  </table>
  *
  **********************************************************
  */
@@ -24,11 +12,25 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "openfsm.h"
 #include "sconfig.h"
 #include "sconfig_fsm_top.h"
 #include "sconfig_fsm_sub_section.h"
 #include "sconfig_fsm_sub_item.h"
+
+struct item *sconfig_get_item_from_section(Config * conf,
+                                           char* section_name,
+                                           char *key_name)
+{
+    struct section *cur_section = NULL;
+
+    cur_section = find_section_in_config(conf, section_name);
+    return find_item_in_section(cur_section, key_name);
+}
+
+void *sconfig_get_item_val(struct item* item)
+{
+    return item->value;
+}
 
 // 只需要初始化一次的有关动作
 static void __sconfig_init_sub_fsm_once(Config * conf)
@@ -175,7 +177,6 @@ int sconfig_init(Config * conf, char *conf_path)
     fp = fopen(conf->conf_path, "r");
     if(!fp) 
     {
-        printf("%s: ", conf->conf_path);
         perror("");
         return -1;
     }
@@ -239,7 +240,7 @@ void sconfig_dump_session(struct section * head)
     }
 }
 
-void sconfig_dump(Config * conf) 
+void sconfig_dump(Config * conf)
 {
     if(!conf) return;
     printf("=======================\n");
@@ -253,41 +254,59 @@ void sconfig_dump(Config * conf)
     return ;
 }
 
-int main(int argc, char *argv[])
+#if 0
+// 将配置写回文件中（导致空行以及注释丢失）
+void sconfig_sync_to_file(Config * conf) 
 {
-    int ret;
-    DECLARE_CONFIG(conf);
+    FILE *fp;
+    static char section_name[1024];
+    static char key_name[1024];
+    static char vals[1024];
 
-    // 通过指定的配置文件进行初始化，会将所有能够解析的节点读进内存
-    ret = sconfig_init(&conf, "./test.ini");
-    //sconfig_read_all_config(&conf);
+    if(!conf) return;
+    if(!(conf->conf_path)) return;
 
-    if(ret)
+    fp = fopen("testw.init", "w");
+    //fp = fopen(conf->conf_path, "w");
+    // sections 
+    struct section * cur_section = conf->sections;
+    while(cur_section)
     {
-        printf("sconfig init error\n");
+        //printf("[%s](%p)\n", cur->section_name, cur->section_name);
+        sprintf(section_name, "[ %s ]\n", cur_section->section_name);
+        fwrite(section_name, 1, strlen(section_name), fp);
+        //sconfig_dump_item(cur->items);
+        //void sconfig_dump_item(struct item * head)
+        //{
+            struct item * cur_item = cur_section->items;
+            while(cur_item)
+            {
+                //printf("-key : %s\n", cur_item->key_name);
+                sprintf(key_name, "%s = ", cur_item->key_name);
+                fwrite(key_name, 1, strlen(key_name), fp);
+                //sconfig_dump_vals(cur_item->vals);
+                //void sconfig_dump_vals(struct values * head)
+                //{
+                    struct values * cur_vals  = cur_item->vals;
+
+                    sprintf(vals, "%s", (char*)cur_vals->value);
+                    //fwrite(vals, 1, strlen(vals), fp);
+                    cur_vals = cur_vals->next;
+                    while(cur_vals)
+                    {
+                        //printf("  %p  #%3d : [%s]\n", cur_vals, cur_vals->value_len, (char*)cur_vals->value);
+                        //printf("Going to next, %p/%p\n", cur_vals, cur_vals->next);
+                        sprintf(vals, "%s, %s", vals, (char*)cur_vals->value);
+                        cur_vals = cur_vals->next;
+                    }
+                    fwrite(vals, 1, strlen(vals), fp);
+                //}
+                fwrite("\n", 1, sizeof("\n"), fp);
+                cur_item = cur_item->next;
+            }
+        cur_section = cur_section->next;
+        printf("\n");
     }
-
-    struct item* host;
-    host = sconfig_get_item_from_section(&conf, "section1", "host");
-
-    if(!host) {
-        printf("section/item not found\n");
-    }
-
-    printf("host = %s\n", (char *) sconfig_get_item_val(host));
-    printf("\n");
-
-    printf("------------------sconfig_reload\n");
-    sconfig_reload(&conf);
-    sconfig_dump(&conf);
-
-    printf("------------------sconfig_deinit\n");
-    sconfig_deinit(&conf);
-    sconfig_dump(&conf);
-
-    printf("------------------sconfig_init\n");
-    ret = sconfig_init(&conf, "./test.ini");
-    sconfig_dump(&conf);
-    return 0;
 }
+#endif
 

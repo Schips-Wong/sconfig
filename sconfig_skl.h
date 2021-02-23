@@ -8,6 +8,7 @@
 
 #ifndef __SCONFIG_SKL__
 #define __SCONFIG_SKL__
+#include "sconfig.h"
 
 // 清空临时缓冲区
 void init_tmp_var_buff(void);
@@ -18,7 +19,6 @@ char *get_tmp_buff_entry(void);
 char save_ch_in_tmp_var(char ch);
 
 // 将临时缓冲区的内容保存出来
-//char* tmp_var_snapshot(void);
 #define clean_tmp_var_snapshot init_tmp_var_buff
 #define parser_clean_up init_tmp_var_buff
 #define tmp_var_snapshot get_tmp_buff_entry
@@ -35,11 +35,7 @@ char* get_cur_key_name(void);
 void set_cur_val(char* val);
 void* get_cur_val(void);
 
-struct item *sconfig_get_item_from_section(Config * conf,
-                                           char* section_name,
-                                           char *key_name);
 
-void *sconfig_get_item_val(struct item* item);
 
 int try_insert_item_in_section(Config * conf,
                                char* section_name, 
@@ -47,5 +43,7 @@ int try_insert_item_in_section(Config * conf,
 
 struct values* get_vals_head(void);
 void tmp_var_switch(void);
+struct section * find_section_in_config(Config * conf, char * section_name);
+struct item * find_item_in_section(struct section *section, char * key_name);
 #endif /* Head define end*/
 

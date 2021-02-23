@@ -1,5 +1,5 @@
-/** @file         sub_fsm.h
- *  @brief        子状态机对外提供的状态接口
+/** @file         sub_fsm_sub_section.h
+ *  @brief        子状态机 section 对外提供的接口
  *  @author       Schips
  *  @date         2021-01-22 19:50:04
  *  @version      v1.0

@@ -1,5 +1,5 @@
-/** @file         sconfig_top.h
- *  @brief        二阶状态机的实现（顶层部分），负责处理每行的数据，决定解析什么类型
+/** @file         sconfig_fsm_top.h
+ *  @brief        状态机的对外接口（顶层部分），负责处理每行的数据，决定解析什么类型
  *  @author       Schips
  *  @date         2021-01-22 19:03:20
  *  @version      v1.0

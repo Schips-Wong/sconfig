@@ -1,5 +1,5 @@
 /** @file         sconfig_item.c
- *  @brief        解析 键值对的有关实现
+ *  @brief        fsm解析 键值对的有关实现
  *  @details      详细说明
  *  @author       Schips
  *  @date         2021-01-28 10:52:17
@@ -7,9 +7,8 @@
  *  @copyright    Copyright By Schips, All Rights Reserved
  */
 
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
 #include "openfsm.h"
 #include "sconfig.h"
 #include "sconfig_skl.h"

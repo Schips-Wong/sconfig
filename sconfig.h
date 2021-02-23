@@ -9,6 +9,8 @@
 #ifndef __SCONFIG__
 #define __SCONFIG__
 
+#include "openfsm.h"
+
 /*
  
 我们所说的配置项是指形如下方提到的这类文件格式配置
@@ -52,14 +54,20 @@ typedef struct
     char           *p_tmp_buff;
 } Config;
 
-void init_tmp_var_buff(void);
-char *get_tmp_buff_entry(void);
 
-char save_ch_in_tmp_var(char ch);
-int set_curr_section_name(void);
-
-// 要求 声明变量的同时需要将有关的内容清空
+// 要求 声明变量的同时需要将内容清空
 #define DECLARE_CONFIG(name)  Config name = {0}
+
+int sconfig_init(Config * conf, char *conf_path);
+void sconfig_deinit(Config * conf);
+void sconfig_reload(Config * conf);
+void sconfig_dump(Config * conf);
+
+void *sconfig_get_item_val(struct item* item);
+
+struct item *sconfig_get_item_from_section(Config * conf,
+                                           char* section_name,
+                                           char *key_name);
 
 #endif /* Head define end*/
 

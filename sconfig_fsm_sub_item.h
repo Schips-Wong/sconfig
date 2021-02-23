@@ -1,5 +1,5 @@
 /** @file         sconfig_sub_item.h
- *  @brief        简要说明
+ *  @brief        子状态机 item 对外提供的接口
  *  @details      详细说明
  *  @author       Schips
  *  @date         2021-01-28 10:52:19
