@@ -72,8 +72,8 @@ CROSS_COMPLIE=
 # The directories in which source/include/library files reside.
 # If not specified, Makefile will:
 #   for SRCDIRS, INCDIRS : search current directory recursively
-SRCDIRS   = .
-INCDIRS   = . 
+SRCDIRS   = src
+INCDIRS   = inc
 #   for LIBDIR : only the current directory will be serached.
 LIBDIR    =
 

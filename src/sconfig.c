@@ -13,9 +13,9 @@
 #include <stdlib.h>
 
 #include "sconfig.h"
+#include "sconfig_skl.h"
 #include "sconfig_fsm_top.h"
-#include "sconfig_fsm_sub_section.h"
-#include "sconfig_fsm_sub_item.h"
+#include "sconfig_fsm_sub.h"
 
 struct item *sconfig_get_item_from_section(Config * conf,
                                            char* section_name,
