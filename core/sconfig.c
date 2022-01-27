@@ -112,7 +112,7 @@ int sconfig_parse_line(Config * conf, char * buff)
         // 状态机内，每次处理以字符为单位
         run_state_machine_once(fsm);
 
-        if(is_curr_state(fsm, top_state_done))
+        if(is_next_state(fsm, FSM_STATE(top_done)))
         {
             reset_state_machine(fsm);
             break;

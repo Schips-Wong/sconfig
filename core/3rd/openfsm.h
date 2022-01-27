@@ -10,6 +10,10 @@
 #define __FSM_H_
 
 /* ----------------------- Defines ------------------------------------------*/
+// 用于快速识别出 STATE与STEP
+#define FSM_STATE(name) state_##name
+#define FSM_FUNCT(name) funct_##name
+
 // 数据类型定义区
 typedef unsigned char state;
 typedef long long step_ret;
@@ -128,7 +132,11 @@ static inline state clr_fsm_error_flag(FSM* fsm)
  */
 static inline void set_procedures(FSM * fsm, Procedure *procedures)
 {
-	if(fsm) fsm->procedures = procedures;
+    if(fsm)
+    {
+        fsm->procedures = procedures;
+        fsm->st.cs = -1; // 执行run之前，当前状态是未定的
+    }
 }
 
 /*!
@@ -165,7 +173,7 @@ static inline void* get_data_entry(FSM * fsm)
  *  @return 非负数 ：代表 所成功执行的状态
  *          -1 : 失败 
  */
-static inline int run_state_machine_once(FSM * fsm)
+static inline state run_state_machine_once(FSM * fsm)
 {
     if(!fsm) return -1;
 
@@ -199,7 +207,7 @@ static inline void* get_step_retval(FSM* fsm)
  */
 static inline state get_curr_state(FSM * fsm)
 {
-    return fsm->st.ns;
+    return fsm->st.cs;
 }
 
 /*!
@@ -247,14 +255,25 @@ static inline state get_next_state(FSM * fsm)
  *
  *  @param[in]  fsm 状态机实例
  *
- *  @return 下一个状态
  */
 static inline void init_state_machine(FSM *p)
 {
     set_next_state(p, p->st.ds);
+    p->st.cs = -1; // 执行run之前，当前状态是未定的
 }
 
-#define reset_state_machine init_state_machine
+/*!
+ *  @brief  将状态机设为默认状态，同时清除错误状态
+ *
+ *  @param[in]  fsm 状态机实例
+ *
+ */
+static inline void reset_state_machine(FSM *p)
+{
+    if(!p) return ;
+    clr_fsm_error_flag(p);
+    init_state_machine(p);
+}
 
 /*!
  *  @brief  判断状态机是否在某个状态
@@ -268,6 +287,20 @@ static inline void init_state_machine(FSM *p)
 static inline state is_curr_state(FSM* fsm, state st)
 {
     return fsm->st.cs == st;
+}
+
+/*!
+ *  @brief  判断状态机是否即将进行某个状态
+ *
+ *  @param[in]  fsm 状态机实例
+ *
+ *  @param[in]  st  状态值
+ *
+ *  @return 是/否
+ */
+static inline state is_next_state(FSM* fsm, state st)
+{
+    return fsm->st.ns == st;
 }
 
 #endif /* __FSM_H_ */
