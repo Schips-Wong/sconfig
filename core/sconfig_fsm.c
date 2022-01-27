@@ -36,7 +36,7 @@ FSM *get_item_sub_fsm(void)
 }
 
 // 判断这一行是什么内容 : 注释， 节 还是 项
-void* top_step_check_type(void* this_fsm)
+void* FSM_FUNCT(top_check_type)(void* this_fsm)
 {
     Config *conf_itself = get_data_entry(this_fsm);
     char *p_tmp_buff;
@@ -53,29 +53,29 @@ void* top_step_check_type(void* this_fsm)
         case '\t':
         case ' ':
             conf_itself->p_tmp_buff++;
-            set_next_state(this_fsm, top_state_check_type);
+            set_next_state(this_fsm, FSM_STATE(top_check_type));
             break;
         // 跳过尾部、注释
         case '\0':
         case '\n':
         case '#':
-            set_next_state(this_fsm, top_state_done);
+            set_next_state(this_fsm, FSM_STATE(top_done));
             break;
         // 如果遇到 [ ，意味着这一行可能是 节名
         case '[':
             //printf("found section head : %s", p_tmp_buff);
             init_tmp_var_buff();
-            set_next_state(this_fsm, top_state_find_section);
+            set_next_state(this_fsm, FSM_STATE(top_find_section));
             break;
         // 如果遇到 ] ，意味着 节名 分析结束
         case ']':
-            set_next_state(this_fsm, top_state_done);
+            set_next_state(this_fsm, FSM_STATE(top_done));
 
             break;
         // 其他情况则是匹配的字符
         default :
             // 此时需要与值进行判断
-            set_next_state(this_fsm, top_state_find_item);
+            set_next_state(this_fsm, FSM_STATE(top_find_item));
             break;
     }
 
@@ -83,7 +83,7 @@ void* top_step_check_type(void* this_fsm)
 }
 
 // 解析Section
-void* top_step_find_section(void* this_fsm) // 解析section头部信息
+void* FSM_FUNCT(top_find_section)(void* this_fsm) // 解析section头部信息
 {
     Config *conf_itself = get_data_entry(this_fsm);
     FSM *section_sub_fsm = get_section_sub_fsm();
@@ -94,14 +94,14 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
     run_state_machine_once(section_sub_fsm);
     if(is_fsm_error(section_sub_fsm))
     {
-        //printf("top_step_find_section err\n");
+        //printf("top_find_section err\n");
         set_next_state(section_sub_fsm, get_section_procedure_default_state());
     }
 
     // 如果判断完成则继续判断其他部分
     if(is_section_procedure_done(section_sub_fsm))
     {
-        set_next_state(this_fsm,         top_state_check_type);
+        set_next_state(this_fsm,         FSM_STATE(top_check_type));
         set_next_state(section_sub_fsm, get_section_procedure_default_state());
         // 记住当前的节名
         set_cur_section_name(tmp_var_snapshot());
@@ -114,7 +114,7 @@ void* top_step_find_section(void* this_fsm) // 解析section头部信息
 }
 
 // 解析 item
-void* top_step_find_item(void* this_fsm) 
+void* FSM_FUNCT(top_find_item)(void* this_fsm) 
 {
     Config *conf_itself = get_data_entry(this_fsm);
     FSM *item_sub_fsm = get_item_sub_fsm();
@@ -125,14 +125,14 @@ void* top_step_find_item(void* this_fsm)
     run_state_machine_once(item_sub_fsm);
     if(is_fsm_error(item_sub_fsm))
     {
-        //printf("top_step_find_item err\n");
+        //printf("top_find_item err\n");
         set_next_state(item_sub_fsm, get_item_procedure_default_state());
     }
 
     // 如果判断完成则继续判断其他部分
     if(is_item_procedure_done(item_sub_fsm))
     {
-        set_next_state(this_fsm,         top_state_check_type);
+        set_next_state(this_fsm,         FSM_STATE(top_check_type));
         set_next_state(item_sub_fsm, get_item_procedure_default_state());
 
         // 尝试插入配置中
@@ -143,7 +143,7 @@ void* top_step_find_item(void* this_fsm)
     return NULL;
 }
 
-void* top_step_done(void* this_fsm)
+void* FSM_FUNCT(top_done)(void* this_fsm)
 {
     return NULL;
 }
@@ -253,7 +253,7 @@ void* step_section_head_done(void* this_fsm)
     return NULL;
 }
 
-void* step_item_get_chars_start(void* this_fsm)
+void* FSM_FUNCT(sub_item_get_chars_start)(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -268,23 +268,23 @@ void* step_item_get_chars_start(void* this_fsm)
         case '\0' :
         case ']'  :
         case '\n' :
-            set_next_state(this_fsm, state_item_head_done);
+            set_next_state(this_fsm, FSM_STATE(item_head_done));
             set_fsm_error_flag(this_fsm);
             break;
         // 如果遇到 '=' 则视为获取 键完成
         case '=' :
-            set_next_state(this_fsm, state_item_get_val);
+            set_next_state(this_fsm, FSM_STATE(item_get_val));
             break;
         // 否则进入获取连续字符模式
         default:
-            set_next_state(this_fsm, state_item_get_key);
+            set_next_state(this_fsm, FSM_STATE(item_get_key));
             break;
     }
 
     return NULL;
 }
 
-void* step_item_get_key(void* this_fsm)
+void* FSM_FUNCT(sub_item_get_key)(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -302,7 +302,7 @@ void* step_item_get_key(void* this_fsm)
             
             init_tmp_var_buff();
             //save_tmp_var_as_cur_key();
-            set_next_state(this_fsm, state_item_get_val);
+            set_next_state(this_fsm, FSM_STATE(item_get_val));
             break;
 
         default :
@@ -314,7 +314,7 @@ void* step_item_get_key(void* this_fsm)
     return NULL;
 }
 
-void* step_item_get_val(void* this_fsm)
+void* FSM_FUNCT(sub_item_get_val)(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -322,17 +322,17 @@ void* step_item_get_val(void* this_fsm)
     {
         // 引号 实现了相互包含
         case '\''  :
-            set_next_state(this_fsm, state_item_get_val_sqm);
+            set_next_state(this_fsm, FSM_STATE(item_get_val_sqm));
             conf->p_tmp_buff++;
             break;
         case '\"'  :
-            set_next_state(this_fsm, state_item_get_val_dqm);
+            set_next_state(this_fsm, FSM_STATE(item_get_val_dqm));
             conf->p_tmp_buff++;
             break;
         case '\n' :
         case '\0' :
             // 结束。处理
-            set_next_state(this_fsm, state_item_head_done);
+            set_next_state(this_fsm, FSM_STATE(item_head_done));
             clr_fsm_error_flag(this_fsm);
             set_cur_val(tmp_var_snapshot());
             //clean_tmp_var_snapshot();
@@ -361,13 +361,13 @@ void* step_item_get_val(void* this_fsm)
     return NULL;
 }
 
-void* step_item_head_done(void* this_fsm)
+void* FSM_FUNCT(sub_item_head_done)(void* this_fsm)
 {
     return NULL;
 }
 
 // 单引号
-void* step_item_get_val_sqm(void* this_fsm)
+void* FSM_FUNCT(sub_item_get_val_sqm)(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -379,7 +379,7 @@ void* step_item_get_val_sqm(void* this_fsm)
         // 再次遇见时，代表结束
         case '\''  :
             conf->p_tmp_buff++;
-            set_next_state(this_fsm, state_item_head_done);
+            set_next_state(this_fsm, FSM_STATE(item_head_done));
             set_cur_val(tmp_var_snapshot());
             //clean_tmp_var_snapshot();
             break;
@@ -398,7 +398,7 @@ void* step_item_get_val_sqm(void* this_fsm)
 }
 
 // 双引号
-void* step_item_get_val_dqm(void* this_fsm)
+void* FSM_FUNCT(sub_item_get_val_dqm)(void* this_fsm)
 {
     Config *conf = get_data_entry(this_fsm);
 
@@ -410,7 +410,7 @@ void* step_item_get_val_dqm(void* this_fsm)
         // 再次遇见时，代表结束
         case '\"'  :
             conf->p_tmp_buff++;
-            set_next_state(this_fsm, state_item_head_done);
+            set_next_state(this_fsm, FSM_STATE(item_head_done));
             set_cur_val(tmp_var_snapshot());
             //clean_tmp_var_snapshot();
             break;
