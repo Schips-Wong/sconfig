@@ -276,7 +276,8 @@ int try_insert_item_in_section(Config * conf,
                                char *key_name)
 {
     struct section *cur_section = NULL;
-    struct item    *cur_item = NULL;
+    struct item    *lst_item = NULL;
+    struct item    *anew_item = NULL;
     struct values * cur_vals  = get_vals_head();
     struct values vvals_head;
     struct values * vvals_now;
@@ -296,30 +297,34 @@ int try_insert_item_in_section(Config * conf,
         cur_section = find_section_in_config(conf, DEFAULT_SECTION_NAME);
     }
 
-    cur_item = cur_section->items;
+    lst_item = cur_section->items;
 
-    while(cur_item)
+    while(lst_item)
     {
-        if(!strcmp(cur_item->key_name, key_name))
+        if(!strcmp(lst_item->key_name, key_name))
         {
             return -1; // exist
         }
-        cur_item = cur_item->next;
+        if(!lst_item->next)
+        {
+            break;
+        }
+        lst_item = lst_item->next;
     }
 
     // 填入名字、值
-    cur_item = new_item();
-    if(!cur_item) return -1;
+    anew_item = new_item();
+    if(!anew_item) return -1;
 
-    cur_item->key_name = malloc(cur_key_name_len);
-    if(!cur_item->key_name) return -1;
+    anew_item->key_name = malloc(cur_key_name_len);
+    if(!anew_item->key_name) return -1;
 
-    memcpy(cur_item->key_name, key_name, strlen(key_name));
-    cur_item->key_name[cur_key_name_len-1] = '\0';
+    memcpy(anew_item->key_name, key_name, strlen(key_name));
+    anew_item->key_name[cur_key_name_len-1] = '\0';
 
-    cur_item->value = malloc(cur_val_len);
-    memcpy(cur_item->key_name, key_name, strlen(key_name));
-    memcpy(cur_item->value, get_cur_val(), cur_val_len);
+    anew_item->value = malloc(cur_val_len);
+    memcpy(anew_item->key_name, key_name, strlen(key_name));
+    memcpy(anew_item->value, get_cur_val(), cur_val_len);
     
     // 一键多值的拷贝
     /*
@@ -333,31 +338,46 @@ int try_insert_item_in_section(Config * conf,
     {
         //printf("[%s]\n", (char*)cur_vals->value);
 
-        cur_item->vals = malloc(sizeof(struct values));
-        cur_item->vals->value = malloc(cur_vals->value_len + 1);
-        cur_item->vals->value_len = cur_vals->value_len;
+        anew_item->vals = malloc(sizeof(struct values));
+        anew_item->vals->value = malloc(cur_vals->value_len + 1);
+        anew_item->vals->value_len = cur_vals->value_len;
 
-        memcpy(cur_item->vals->value, cur_vals->value, cur_vals->value_len);
-        *(char*)(cur_item->vals->value + cur_vals->value_len) = '\0';
-        //printf("#%d#      [%s]\n", cur_vals->value_len, (char*)cur_item->vals->value);
+        memcpy(anew_item->vals->value, cur_vals->value, cur_vals->value_len);
+        *(char*)(anew_item->vals->value + cur_vals->value_len) = '\0';
+        //printf("#%d#      [%s]\n", cur_vals->value_len, (char*)anew_item->vals->value);
 
 
         // 延迟一个步长的遍历链接
-        //printf("[copy %p]  vvals_now  %p\n", cur_item->vals, vvals_now);
-        vvals_now->next = cur_item->vals;
+        //printf("[copy %p]  vvals_now  %p\n", anew_item->vals, vvals_now);
+        vvals_now->next = anew_item->vals;
 
         // 切换到下一个节点
         cur_vals = cur_vals->next;
 
         vvals_now = vvals_now->next;
     }
-    cur_item->vals = vvals_head.next;
+    anew_item->vals = vvals_head.next;
     // 确保最后一个值后面 是 NULL
     vvals_now->next = NULL;
 
+#if 0
     // 头插到链表中
-    cur_item->next     = cur_section->items;
-    cur_section->items = cur_item;
+    anew_item->next     = cur_section->items;
+    cur_section->items  = anew_item;
+#else
+    // 如果不存在最后一个item，则插入到链表的头部（因为链表默认没有head，因此存在空的时候）
+    if(!lst_item)
+    {
+        anew_item->next     = cur_section->items;
+        cur_section->items = anew_item;
+    }else
+    {
+        // 否则尾插到链表的尾部
+        lst_item->next  = anew_item;
+        anew_item->next     = NULL;
+    }
+#endif
+
 
     return 0;
 }
