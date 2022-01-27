@@ -52,7 +52,7 @@ TYPE=
 #   (Default): current directory name(or 'a.out'), eg : xx or a.out
 #         so : current directory name,             eg : libxx.so
 #          a : current directory name,             eg : libxx.a
-PROGRAM   = test
+PROGRAM   = sconfig
 
 # The pre-processor and compiler options.
 # For c/c++ (All)
@@ -72,8 +72,8 @@ CROSS_COMPLIE=
 # The directories in which source/include/library files reside.
 # If not specified, Makefile will:
 #   for SRCDIRS, INCDIRS : search current directory recursively
-SRCDIRS   = src
-INCDIRS   = inc
+SRCDIRS   = core core/3rd .
+INCDIRS   = core core/3rd
 #   for LIBDIR : only the current directory will be serached.
 LIBDIR    =
 

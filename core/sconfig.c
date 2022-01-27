@@ -14,8 +14,7 @@
 
 #include "sconfig.h"
 #include "sconfig_skl.h"
-#include "sconfig_fsm_top.h"
-#include "sconfig_fsm_sub.h"
+#include "sconfig_fsm.h"
 
 struct item *sconfig_get_item_from_section(Config * conf,
                                            char* section_name,
